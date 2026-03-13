@@ -1,0 +1,1157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>APOS — The Autonomous App Portfolio Operating System</title>
+<meta name="description" content="Open-source agentic pipeline for identifying, validating, building, and monetising software products. Ship apps on autopilot.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:wght@400;500;600;700&family=Source+Code+Pro:wght@400;500&display=swap" rel="stylesheet">
+<style>
+/* ─── Reset ─── */
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+:root {
+  --bg: #faf9f6;
+  --bg-elevated: #ffffff;
+  --bg-card: rgba(0,0,0,0.02);
+  --bg-card-hover: rgba(0,0,0,0.04);
+  --border: rgba(0,0,0,0.08);
+  --border-hover: rgba(0,0,0,0.16);
+  --text: #1a1a1a;
+  --text-secondary: #5c5c5c;
+  --text-tertiary: #8a8a8a;
+  --accent: #d97757;
+  --accent-dim: rgba(217,119,87,0.1);
+  --accent-text: #c4623f;
+  --green: #2d8659;
+  --green-dim: rgba(45,134,89,0.08);
+  --amber: #b8860b;
+  --amber-dim: rgba(184,134,11,0.08);
+  --red: #c53030;
+  --red-dim: rgba(197,48,48,0.06);
+  --code-bg: #1a1a1a;
+  --code-text: #e8e8e8;
+  --font: 'Inter', -apple-system, system-ui, sans-serif;
+  --font-display: 'Instrument Serif', Georgia, serif;
+  --mono: 'Source Code Pro', 'SF Mono', monospace;
+  --max-w: 1080px;
+  --radius: 12px;
+}
+
+html { scroll-behavior: smooth; }
+body {
+  font-family: var(--font);
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  overflow-x: hidden;
+}
+a { color: inherit; text-decoration: none; }
+
+/* ─── Utility ─── */
+.container { max-width: var(--max-w); margin: 0 auto; padding: 0 24px; }
+
+/* ─── Scroll Animations ─── */
+.reveal {
+  opacity: 0;
+  transform: translateY(24px);
+  transition: opacity 0.6s cubic-bezier(0.16, 1, 0.3, 1), transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.reveal.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* ─── Nav ─── */
+nav {
+  position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+  background: rgba(250,249,246,0.85);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--border);
+}
+.nav-inner {
+  max-width: var(--max-w);
+  margin: 0 auto;
+  padding: 0 24px;
+  height: 56px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.nav-logo {
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-size: 20px;
+  letter-spacing: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.nav-logo .dot {
+  width: 7px; height: 7px;
+  background: var(--accent);
+  border-radius: 50%;
+}
+.nav-links {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.nav-links a {
+  padding: 6px 14px;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  border-radius: 8px;
+  transition: color 0.2s, background 0.2s;
+}
+.nav-links a:hover { color: var(--text); background: var(--bg-card-hover); }
+.nav-star {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  transition: border-color 0.2s, background 0.2s;
+}
+.nav-star:hover { border-color: var(--border-hover); background: var(--bg-card); }
+
+/* ─── Hero ─── */
+.hero {
+  padding: 160px 0 100px;
+  text-align: center;
+}
+.hero-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 14px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  margin-bottom: 32px;
+}
+.hero-badge .pulse {
+  width: 6px; height: 6px;
+  background: var(--green);
+  border-radius: 50%;
+  animation: pulse 2s ease-in-out infinite;
+}
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.3; }
+}
+.hero h1 {
+  font-family: var(--font-display);
+  font-size: clamp(42px, 6vw, 76px);
+  font-weight: 400;
+  letter-spacing: -0.5px;
+  line-height: 1.08;
+  margin-bottom: 28px;
+  max-width: 720px;
+  margin-left: auto;
+  margin-right: auto;
+  color: var(--text);
+}
+.hero h1 .gradient {
+  font-style: italic;
+  color: var(--accent);
+}
+.hero p {
+  font-size: 18px;
+  color: var(--text-secondary);
+  max-width: 520px;
+  margin: 0 auto 40px;
+  line-height: 1.7;
+}
+.hero-actions {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 11px 22px;
+  font-size: 15px;
+  font-weight: 600;
+  border-radius: 10px;
+  border: none;
+  cursor: pointer;
+  transition: transform 0.15s, box-shadow 0.2s, background 0.2s;
+  font-family: var(--font);
+}
+.btn:active { transform: scale(0.97); }
+.btn-primary {
+  background: var(--text);
+  color: var(--bg);
+}
+.btn-primary:hover { box-shadow: 0 2px 12px rgba(0,0,0,0.15); }
+.btn-secondary {
+  background: var(--bg-elevated);
+  color: var(--text);
+  border: 1px solid var(--border);
+}
+.btn-secondary:hover { border-color: var(--border-hover); }
+.hero-cmd {
+  margin-top: 48px;
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 24px;
+  background: var(--code-bg);
+  border-radius: 10px;
+  font-family: var(--mono);
+  font-size: 14px;
+  color: var(--code-text);
+  cursor: pointer;
+  transition: box-shadow 0.2s;
+}
+.hero-cmd:hover { box-shadow: 0 4px 20px rgba(0,0,0,0.12); }
+.hero-cmd .prompt { color: var(--accent); user-select: none; }
+.hero-cmd .copy-hint {
+  font-family: var(--font);
+  font-size: 12px;
+  color: rgba(255,255,255,0.4);
+  padding: 2px 8px;
+  background: rgba(255,255,255,0.08);
+  border-radius: 4px;
+}
+
+/* ─── Section ─── */
+section { padding: 100px 0; }
+.section-label {
+  font-size: 13px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  color: var(--accent-text);
+  margin-bottom: 16px;
+}
+.section-title {
+  font-family: var(--font-display);
+  font-size: clamp(30px, 4vw, 48px);
+  font-weight: 400;
+  letter-spacing: -0.3px;
+  line-height: 1.15;
+  margin-bottom: 16px;
+  color: var(--text);
+}
+.section-desc {
+  font-size: 17px;
+  color: var(--text-secondary);
+  max-width: 580px;
+  line-height: 1.7;
+}
+.section-desc.centered { margin: 0 auto; text-align: center; }
+
+/* ─── Pipeline ─── */
+.pipeline-section { text-align: center; }
+.pipeline-track {
+  display: flex;
+  justify-content: center;
+  align-items: stretch;
+  gap: 0;
+  margin-top: 56px;
+  position: relative;
+}
+.pipeline-step {
+  flex: 1;
+  max-width: 200px;
+  text-align: center;
+  position: relative;
+  padding: 0 8px;
+}
+.pipeline-step .step-num {
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--text-tertiary);
+  margin-bottom: 12px;
+}
+.pipeline-step .step-icon {
+  width: 52px; height: 52px;
+  margin: 0 auto 16px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22px;
+  transition: border-color 0.3s, box-shadow 0.3s;
+}
+.pipeline-step:hover .step-icon {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 4px var(--accent-dim);
+}
+.pipeline-step .step-name {
+  font-family: var(--font-display);
+  font-size: 18px;
+  font-weight: 400;
+  margin-bottom: 6px;
+}
+.pipeline-step .step-desc {
+  font-size: 13px;
+  color: var(--text-tertiary);
+  line-height: 1.5;
+}
+.pipeline-connector {
+  position: absolute;
+  top: 48px;
+  left: calc(50% + 26px);
+  width: calc(100% - 52px);
+  height: 1px;
+  background: var(--border);
+}
+.pipeline-connector::after {
+  content: '';
+  position: absolute;
+  right: -4px; top: -3px;
+  width: 6px; height: 6px;
+  border-right: 1.5px solid var(--text-tertiary);
+  border-top: 1.5px solid var(--text-tertiary);
+  transform: rotate(45deg);
+}
+.pipeline-step:last-child .pipeline-connector { display: none; }
+
+/* ─── Workflow Steps ─── */
+.workflow-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20px;
+  margin-top: 56px;
+}
+.workflow-card {
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 32px;
+  transition: border-color 0.3s, box-shadow 0.3s;
+}
+.workflow-card:hover {
+  border-color: var(--border-hover);
+  box-shadow: 0 2px 12px rgba(0,0,0,0.04);
+}
+.workflow-card .card-num {
+  font-family: var(--mono);
+  font-size: 13px;
+  color: var(--accent-text);
+  font-weight: 600;
+  margin-bottom: 20px;
+}
+.workflow-card h3 {
+  font-family: var(--font-display);
+  font-size: 20px;
+  font-weight: 400;
+  margin-bottom: 10px;
+}
+.workflow-card p {
+  font-size: 14px;
+  color: var(--text-secondary);
+  line-height: 1.65;
+}
+
+/* ─── Feature Grid ─── */
+.feature-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+  margin-top: 56px;
+}
+.feature-card {
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 28px;
+  transition: border-color 0.3s, box-shadow 0.3s, transform 0.3s;
+}
+.feature-card:hover {
+  border-color: var(--border-hover);
+  box-shadow: 0 2px 12px rgba(0,0,0,0.04);
+  transform: translateY(-2px);
+}
+.feature-card .card-icon {
+  font-size: 22px;
+  margin-bottom: 14px;
+}
+.feature-card h3 {
+  font-family: var(--font-display);
+  font-size: 18px;
+  font-weight: 400;
+  margin-bottom: 8px;
+}
+.feature-card p {
+  font-size: 13px;
+  color: var(--text-secondary);
+  line-height: 1.65;
+}
+
+/* ─── Agent Showcase ─── */
+.agent-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
+  margin-top: 56px;
+}
+.agent-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 24px;
+  transition: border-color 0.3s;
+}
+.agent-card:hover { border-color: var(--border-hover); }
+.agent-badge {
+  flex-shrink: 0;
+  padding: 5px 9px;
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 600;
+  border-radius: 6px;
+  white-space: nowrap;
+}
+.agent-badge.pipeline { background: var(--accent-dim); color: var(--accent-text); }
+.agent-badge.gate { background: var(--red-dim); color: var(--red); }
+.agent-badge.advisory { background: var(--amber-dim); color: var(--amber); }
+.agent-badge.utility { background: var(--green-dim); color: var(--green); }
+.agent-card h4 { font-family: var(--font-display); font-size: 18px; font-weight: 400; margin-bottom: 4px; }
+.agent-card p { font-size: 13px; color: var(--text-secondary); line-height: 1.55; }
+
+/* ─── Comparison ─── */
+.comparison {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+  margin-top: 56px;
+}
+.comparison-col {
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+.comparison-header {
+  padding: 18px 28px;
+  font-family: var(--font-display);
+  font-size: 17px;
+  font-weight: 400;
+  border-bottom: 1px solid var(--border);
+}
+.comparison-col.before .comparison-header { background: var(--red-dim); color: var(--red); }
+.comparison-col.after .comparison-header { background: var(--green-dim); color: var(--green); }
+.comparison-row {
+  padding: 14px 28px;
+  font-size: 14px;
+  color: var(--text-secondary);
+  border-bottom: 1px solid rgba(0,0,0,0.04);
+  line-height: 1.5;
+}
+.comparison-row:last-child { border-bottom: none; }
+
+/* ─── Code Block ─── */
+.code-block {
+  background: var(--code-bg);
+  border-radius: var(--radius);
+  overflow: hidden;
+  margin-top: 48px;
+  box-shadow: 0 4px 24px rgba(0,0,0,0.08);
+}
+.code-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 20px;
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+  font-size: 13px;
+  color: rgba(255,255,255,0.4);
+}
+.code-header .dot-row {
+  display: flex; gap: 6px;
+}
+.code-header .dot-row span {
+  width: 10px; height: 10px;
+  border-radius: 50%;
+}
+.code-header .dot-row span:nth-child(1) { background: #ff5f57; }
+.code-header .dot-row span:nth-child(2) { background: #febc2e; }
+.code-header .dot-row span:nth-child(3) { background: #28c840; }
+.code-body {
+  padding: 20px 24px;
+  font-family: var(--mono);
+  font-size: 13px;
+  line-height: 1.8;
+  overflow-x: auto;
+  color: var(--code-text);
+}
+.code-body .comment { color: rgba(255,255,255,0.35); }
+.code-body .cmd { color: var(--accent); }
+.code-body .flag { color: #6ec77a; }
+.code-body .output { color: rgba(255,255,255,0.6); }
+
+/* ─── Stats ─── */
+.stats-row {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+  margin-top: 0;
+}
+.stat-card {
+  text-align: center;
+  padding: 32px 20px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+.stat-card .stat-num {
+  font-family: var(--font-display);
+  font-size: 48px;
+  font-weight: 400;
+  letter-spacing: -1px;
+  margin-bottom: 4px;
+  color: var(--text);
+}
+.stat-card .stat-label {
+  font-size: 14px;
+  color: var(--text-secondary);
+}
+
+/* ─── FAQ ─── */
+.faq-list {
+  max-width: 680px;
+  margin: 48px auto 0;
+}
+.faq-item {
+  border-bottom: 1px solid var(--border);
+}
+.faq-question {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px 0;
+  background: none;
+  border: none;
+  font-family: var(--font-display);
+  font-size: 19px;
+  font-weight: 400;
+  color: var(--text);
+  cursor: pointer;
+  text-align: left;
+}
+.faq-question:hover { color: var(--accent-text); }
+.faq-chevron {
+  flex-shrink: 0;
+  width: 20px; height: 20px;
+  color: var(--text-tertiary);
+  transition: transform 0.3s;
+}
+.faq-item.open .faq-chevron { transform: rotate(180deg); }
+.faq-answer {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.faq-answer-inner {
+  padding: 0 0 20px;
+  font-size: 15px;
+  color: var(--text-secondary);
+  line-height: 1.7;
+}
+
+/* ─── CTA ─── */
+.cta-section {
+  text-align: center;
+  padding: 100px 0 140px;
+}
+
+/* ─── Divider ─── */
+.section-divider {
+  max-width: var(--max-w);
+  margin: 0 auto;
+  padding: 0 24px;
+}
+.section-divider hr {
+  border: none;
+  height: 1px;
+  background: var(--border);
+}
+
+/* ─── Footer ─── */
+footer {
+  border-top: 1px solid var(--border);
+  padding: 48px 0;
+}
+.footer-inner {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.footer-left {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+}
+.footer-logo {
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-size: 18px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.footer-logo .dot {
+  width: 6px; height: 6px;
+  background: var(--accent);
+  border-radius: 50%;
+}
+.footer-copy { font-size: 13px; color: var(--text-tertiary); }
+.footer-links {
+  display: flex;
+  gap: 24px;
+}
+.footer-links a {
+  font-size: 13px;
+  color: var(--text-tertiary);
+  transition: color 0.2s;
+}
+.footer-links a:hover { color: var(--text); }
+
+/* ─── Responsive ─── */
+@media (max-width: 768px) {
+  .hero { padding: 120px 0 80px; }
+  .hero h1 { letter-spacing: -1.5px; }
+  .pipeline-track { flex-direction: column; align-items: center; gap: 24px; }
+  .pipeline-step { max-width: 280px; }
+  .pipeline-connector { display: none; }
+  .workflow-grid { grid-template-columns: 1fr; }
+  .feature-grid { grid-template-columns: 1fr; }
+  .agent-grid { grid-template-columns: 1fr; }
+  .comparison { grid-template-columns: 1fr; }
+  .stats-row { grid-template-columns: repeat(2, 1fr); }
+  .footer-inner { flex-direction: column; gap: 24px; text-align: center; }
+  .footer-left { flex-direction: column; }
+}
+@media (max-width: 480px) {
+  .hero-cmd { font-size: 12px; padding: 12px 16px; }
+  .stats-row { grid-template-columns: 1fr; }
+  .nav-links a:not(.nav-star) { display: none; }
+}
+</style>
+</head>
+<body>
+
+<!-- ─── Navigation ─── -->
+<nav>
+  <div class="nav-inner">
+    <a href="#" class="nav-logo">
+      <span class="dot"></span>
+      APOS
+    </a>
+    <div class="nav-links">
+      <a href="#pipeline">Pipeline</a>
+      <a href="#features">Features</a>
+      <a href="#agents">Agents</a>
+      <a href="#faq">FAQ</a>
+      <a href="https://github.com/mpc-eng/apos" target="_blank" rel="noopener" class="nav-star">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
+        Star
+      </a>
+    </div>
+  </div>
+</nav>
+
+<!-- ─── Hero ─── -->
+<section class="hero">
+  <div class="container">
+    <div class="hero-badge reveal">
+      <span class="pulse"></span>
+      Open Source
+    </div>
+    <h1 class="reveal">Ship apps on <span class="gradient">autopilot</span></h1>
+    <p class="reveal">
+      The autonomous pipeline that takes ideas from signal to store.
+      32 AI agents. 5 stages. One decision-maker.
+    </p>
+    <div class="hero-actions reveal">
+      <a href="https://github.com/mpc-eng/apos" target="_blank" rel="noopener" class="btn btn-primary">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
+        Get Started
+      </a>
+      <a href="#pipeline" class="btn btn-secondary">See How It Works</a>
+    </div>
+    <div class="hero-cmd reveal" onclick="navigator.clipboard.writeText('git clone https://github.com/mpc-eng/apos.git')">
+      <span class="prompt">$</span>
+      git clone https://github.com/mpc-eng/apos.git
+      <span class="copy-hint">Copy</span>
+    </div>
+  </div>
+</section>
+
+<!-- ─── Stats ─── -->
+<section style="padding-top: 0;">
+  <div class="container">
+    <div class="stats-row">
+      <div class="stat-card reveal">
+        <div class="stat-num">32</div>
+        <div class="stat-label">AI Agents</div>
+      </div>
+      <div class="stat-card reveal">
+        <div class="stat-num">5</div>
+        <div class="stat-label">Pipeline Stages</div>
+      </div>
+      <div class="stat-card reveal">
+        <div class="stat-num">3</div>
+        <div class="stat-label">Ideation Modes</div>
+      </div>
+      <div class="stat-card reveal">
+        <div class="stat-num">2</div>
+        <div class="stat-label">Platforms</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ─── Pipeline ─── -->
+<section id="pipeline" class="pipeline-section">
+  <div class="container">
+    <div class="section-label reveal">Pipeline</div>
+    <div class="section-title reveal">Idea to App Store in five stages</div>
+    <p class="section-desc centered reveal">
+      Every app flows through the same battle-tested pipeline.
+      Each stage has dedicated agents, hard gates, and decision cards.
+    </p>
+    <div class="pipeline-track reveal">
+      <div class="pipeline-step">
+        <div class="step-num">01</div>
+        <div class="step-icon">&#x1F4A1;</div>
+        <div class="step-name">Idea Pool</div>
+        <div class="step-desc">Scan 8 signal sources for struggle behaviour. Score and rank.</div>
+        <div class="pipeline-connector"></div>
+      </div>
+      <div class="pipeline-step">
+        <div class="step-num">02</div>
+        <div class="step-icon">&#x2696;&#xFE0F;</div>
+        <div class="step-name">Triage</div>
+        <div class="step-desc">Adversarial prosecution and defence. One winner per batch.</div>
+        <div class="pipeline-connector"></div>
+      </div>
+      <div class="pipeline-step">
+        <div class="step-num">03</div>
+        <div class="step-icon">&#x2705;</div>
+        <div class="step-name">Validate</div>
+        <div class="step-desc">Landing page with pricing signal. 7-day conversion tracking.</div>
+        <div class="pipeline-connector"></div>
+      </div>
+      <div class="pipeline-step">
+        <div class="step-num">04</div>
+        <div class="step-icon">&#x1F6E0;&#xFE0F;</div>
+        <div class="step-name">Build</div>
+        <div class="step-desc">Orchestrated spec, code, test, review cycles. Sprint retros.</div>
+        <div class="pipeline-connector"></div>
+      </div>
+      <div class="pipeline-step">
+        <div class="step-num">05</div>
+        <div class="step-icon">&#x1F4C8;</div>
+        <div class="step-name">Convert</div>
+        <div class="step-desc">Weekly analytics, A/B tests, and continuous optimisation.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ─── How It Works ─── -->
+<section>
+  <div class="container">
+    <div class="section-label reveal">How It Works</div>
+    <div class="section-title reveal">Define. Approve. Ship.</div>
+    <p class="section-desc reveal">
+      You are the Chief Decision Officer. Your only inputs are binary approve/reject decisions.
+      The agents handle everything else.
+    </p>
+    <div class="workflow-grid">
+      <div class="workflow-card reveal">
+        <div class="card-num">01</div>
+        <h3>Generate Ideas</h3>
+        <p>Three ideation modes scan for opportunities: market-pull signals, technology-push from domain expertise, or clone-and-differentiate from existing apps.</p>
+      </div>
+      <div class="workflow-card reveal">
+        <div class="card-num">02</div>
+        <h3>Validate Demand</h3>
+        <p>Automated landing pages with Formspree forms and Plausible analytics. Multi-channel distribution. Conversion rate as the primary metric.</p>
+      </div>
+      <div class="workflow-card reveal">
+        <div class="card-num">03</div>
+        <h3>Build &amp; Ship</h3>
+        <p>The Orchestrator coordinates spec, code, test, and review agents through sprint cycles. Compile checks, test execution, and UX walkthroughs are automated.</p>
+      </div>
+    </div>
+
+    <!-- Terminal demo -->
+    <div class="code-block reveal">
+      <div class="code-header">
+        <div class="dot-row"><span></span><span></span><span></span></div>
+        terminal
+      </div>
+      <div class="code-body">
+        <div><span class="comment"># Generate ideas from market signals</span></div>
+        <div><span class="cmd">/generate-ideas</span></div>
+        <div><span class="output">[IDEA] Scanning 8 signal sources...</span></div>
+        <div><span class="output">[IDEA] 4 ideas scored and written to ideas.json</span></div>
+        <div>&nbsp;</div>
+        <div><span class="comment"># Triage the best candidates</span></div>
+        <div><span class="cmd">/triage</span></div>
+        <div><span class="output">[TRIAGE] Kill brief: prosecution filed for 4 ideas</span></div>
+        <div><span class="output">[TRIAGE] Defence passed 2 of 4 checks</span></div>
+        <div><span class="output">[TRIAGE] PROMOTE: "FocusFlow" &rarr; Validate</span></div>
+        <div>&nbsp;</div>
+        <div><span class="comment"># Start building</span></div>
+        <div><span class="cmd">/build</span></div>
+        <div><span class="output">[ORCHESTRATOR] Phase 1: Foundation starting...</span></div>
+        <div><span class="output">[PRD] Writing PRD from validation data</span></div>
+        <div><span class="output">[ARCH] + [DESIGN] + [REQUIREMENTS] running in parallel</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ─── Features ─── -->
+<section id="features">
+  <div class="container">
+    <div class="section-label reveal">Features</div>
+    <div class="section-title reveal">Everything you need to ship</div>
+    <p class="section-desc reveal">
+      From signal scanning to App Store optimisation, the pipeline covers the full lifecycle.
+    </p>
+    <div class="feature-grid">
+      <div class="feature-card reveal">
+        <div class="card-icon">&#x1F50D;</div>
+        <h3>Signal Scanning</h3>
+        <p>8 sources: App Store reviews, Reddit, Google Trends, regulatory changes, competitor reviews, Twitter/X, Trustpilot, Product Hunt.</p>
+      </div>
+      <div class="feature-card reveal">
+        <div class="card-icon">&#x2694;&#xFE0F;</div>
+        <h3>Adversarial Triage</h3>
+        <p>Two-pass evaluation: prosecution files a kill brief, defence responds with four checks. Only one idea promoted per batch.</p>
+      </div>
+      <div class="feature-card reveal">
+        <div class="card-icon">&#x1F310;</div>
+        <h3>Multi-Platform</h3>
+        <p>iOS (Swift 6 / SwiftUI) and Web (TypeScript / React / Next.js). Platform set per-app with core + overlay agent composition.</p>
+      </div>
+      <div class="feature-card reveal">
+        <div class="card-icon">&#x1F3AF;</div>
+        <h3>PMF Gate</h3>
+        <p>Hard gate between build and monetisation. Sean Ellis 40% test, D7 retention, core loop engagement, NPS baseline.</p>
+      </div>
+      <div class="feature-card reveal">
+        <div class="card-icon">&#x1F504;</div>
+        <h3>Sprint Retros</h3>
+        <p>After each TestFlight deploy, synthesise user feedback into feature health, amendment proposals, and backlog adjustments.</p>
+      </div>
+      <div class="feature-card reveal">
+        <div class="card-icon">&#x1F4CB;</div>
+        <h3>Mission Control</h3>
+        <p>Action queue with dependency graph scheduling, parallel dispatch, cascade blocking, and full audit trail.</p>
+      </div>
+      <div class="feature-card reveal">
+        <div class="card-icon">&#x1F3A8;</div>
+        <h3>Design System</h3>
+        <p>Shared APOSDesignSystem package with 15 components, semantic tokens, and per-app theming via environment injection.</p>
+      </div>
+      <div class="feature-card reveal">
+        <div class="card-icon">&#x1F9EA;</div>
+        <h3>Experiment Registry</h3>
+        <p>Cross-app A/B test tracking. Results feed back into triage, specs, and PMF gate decisions for transferable insights.</p>
+      </div>
+      <div class="feature-card reveal">
+        <div class="card-icon">&#x1F50E;</div>
+        <h3>Deep Research</h3>
+        <p>7 research modules: market sizing, regulatory context, competitor analysis, user research, technical feasibility, monetisation, value chain.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ─── Agents ─── -->
+<section id="agents">
+  <div class="container">
+    <div class="section-label reveal">Agent Architecture</div>
+    <div class="section-title reveal">32 specialised agents</div>
+    <p class="section-desc reveal">
+      Four categories: pipeline agents drive workflow forward, gate agents block on failure,
+      advisory agents enrich without blocking, utility agents maintain the framework.
+    </p>
+    <div class="agent-grid">
+      <div class="agent-card reveal">
+        <span class="agent-badge pipeline">PIPELINE</span>
+        <div>
+          <h4>Orchestrator</h4>
+          <p>Coordinates build subagents, constructs context bundles, manages action queues. Never writes code directly.</p>
+        </div>
+      </div>
+      <div class="agent-card reveal">
+        <span class="agent-badge pipeline">PIPELINE</span>
+        <div>
+          <h4>Idea Agent</h4>
+          <p>Scans 8 signal sources, frames JTBD, scores ideas 1-5 with owner proximity and trend coupling modifiers.</p>
+        </div>
+      </div>
+      <div class="agent-card reveal">
+        <span class="agent-badge pipeline">PIPELINE</span>
+        <div>
+          <h4>Triage Agent</h4>
+          <p>Three-role adversarial team: Prosecutor, Defence, Judge. Genuine separation of concerns in independent contexts.</p>
+        </div>
+      </div>
+      <div class="agent-card reveal">
+        <span class="agent-badge pipeline">PIPELINE</span>
+        <div>
+          <h4>Code Agent</h4>
+          <p>Writes code to satisfy numbered acceptance criteria. Platform-specific via core + overlay composition.</p>
+        </div>
+      </div>
+      <div class="agent-card reveal">
+        <span class="agent-badge gate">GATE</span>
+        <div>
+          <h4>UX Review</h4>
+          <p>First Wow Moment, Hook Model, core loop, D2 retention, accessibility audit, persona-wow alignment.</p>
+        </div>
+      </div>
+      <div class="agent-card reveal">
+        <span class="agent-badge gate">GATE</span>
+        <div>
+          <h4>PMF Gate</h4>
+          <p>Hard gate between Phase 2 and Phase 3. Four checks must pass before monetisation investment.</p>
+        </div>
+      </div>
+      <div class="agent-card reveal">
+        <span class="agent-badge advisory">ADVISORY</span>
+        <div>
+          <h4>Monetisation Review</h4>
+          <p>Flags 11 monetisation issue types. Enriches decisions without blocking the pipeline.</p>
+        </div>
+      </div>
+      <div class="agent-card reveal">
+        <span class="agent-badge utility">UTILITY</span>
+        <div>
+          <h4>Sync Agent</h4>
+          <p>Detects framework changes via git diff, builds a sync plan, applies approved changes across all artifacts.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ─── Comparison ─── -->
+<section>
+  <div class="container">
+    <div class="section-label reveal">Why APOS</div>
+    <div class="section-title reveal">Before and after</div>
+    <p class="section-desc reveal">
+      What changes when you stop stitching agents together manually.
+    </p>
+    <div class="comparison reveal">
+      <div class="comparison-col before">
+        <div class="comparison-header">Without APOS</div>
+        <div class="comparison-row">Ideas sit in a notes app, never validated</div>
+        <div class="comparison-row">Vibe-code the first thing that sounds fun</div>
+        <div class="comparison-row">No gate between "interesting" and "worth building"</div>
+        <div class="comparison-row">Ship without knowing if anyone will pay</div>
+        <div class="comparison-row">Context scattered across 15 browser tabs</div>
+        <div class="comparison-row">Post-launch analytics are an afterthought</div>
+      </div>
+      <div class="comparison-col after">
+        <div class="comparison-header">With APOS</div>
+        <div class="comparison-row">8 signal sources scanned, JTBD framed, scored 1-5</div>
+        <div class="comparison-row">Adversarial triage kills bad ideas before they waste time</div>
+        <div class="comparison-row">7-day validation with real conversion data</div>
+        <div class="comparison-row">PMF gate requires Sean Ellis 40% before monetisation</div>
+        <div class="comparison-row">Orchestrator constructs focused context bundles per agent</div>
+        <div class="comparison-row">Weekly AARRR funnel diagnosis with A/B test proposals</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ─── Open Source ─── -->
+<section>
+  <div class="container" style="text-align: center;">
+    <div class="section-label reveal">Open Source</div>
+    <div class="section-title reveal">Built in the open</div>
+    <p class="section-desc centered reveal">
+      APOS is MIT licensed. Every agent definition, schema, and slash command is in the repo.
+      Fork it, adapt it, make it yours.
+    </p>
+    <div style="margin-top: 40px;" class="reveal">
+      <a href="https://github.com/mpc-eng/apos" target="_blank" rel="noopener" class="btn btn-primary">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
+        View on GitHub
+      </a>
+    </div>
+  </div>
+</section>
+
+<!-- ─── FAQ ─── -->
+<section id="faq">
+  <div class="container">
+    <div style="text-align: center;">
+      <div class="section-label reveal">FAQ</div>
+      <div class="section-title reveal">Questions</div>
+    </div>
+    <div class="faq-list">
+      <div class="faq-item reveal">
+        <button class="faq-question" onclick="this.parentElement.classList.toggle('open'); const a=this.nextElementSibling; a.style.maxHeight=a.style.maxHeight?'':a.scrollHeight+'px'">
+          What is APOS?
+          <svg class="faq-chevron" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd"/></svg>
+        </button>
+        <div class="faq-answer">
+          <div class="faq-answer-inner">
+            APOS is the Autonomous App Portfolio Operating System &mdash; a fully agentic pipeline for identifying, validating, building, and monetising software products. It operates across five stages: Idea Pool, Triage, Validate, Build, and Convert. Designed for a solo PM operating as Chief Decision Officer.
+          </div>
+        </div>
+      </div>
+      <div class="faq-item reveal">
+        <button class="faq-question" onclick="this.parentElement.classList.toggle('open'); const a=this.nextElementSibling; a.style.maxHeight=a.style.maxHeight?'':a.scrollHeight+'px'">
+          What do I need to run it?
+          <svg class="faq-chevron" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd"/></svg>
+        </button>
+        <div class="faq-answer">
+          <div class="faq-answer-inner">
+            Claude Code (VS Code extension) with access to Claude. The pipeline runs entirely via slash commands in your editor. For iOS builds, you'll need Xcode and XcodeGen. For web builds, Node.js and npm.
+          </div>
+        </div>
+      </div>
+      <div class="faq-item reveal">
+        <button class="faq-question" onclick="this.parentElement.classList.toggle('open'); const a=this.nextElementSibling; a.style.maxHeight=a.style.maxHeight?'':a.scrollHeight+'px'">
+          How many apps can I run at once?
+          <svg class="faq-chevron" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd"/></svg>
+        </button>
+        <div class="faq-answer">
+          <div class="faq-answer-inner">
+            As many as you want. Each app gets its own directory under apps/ with isolated specs, docs, and agent outputs. Use /switch to change the active app context. Multiple apps can be in Build concurrently.
+          </div>
+        </div>
+      </div>
+      <div class="faq-item reveal">
+        <button class="faq-question" onclick="this.parentElement.classList.toggle('open'); const a=this.nextElementSibling; a.style.maxHeight=a.style.maxHeight?'':a.scrollHeight+'px'">
+          Can I skip stages?
+          <svg class="faq-chevron" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd"/></svg>
+        </button>
+        <div class="faq-answer">
+          <div class="faq-answer-inner">
+            Yes. You can manually promote ideas to Build with a confirmation check (recorded as manual override). There's also a Rapid Prototype path for low-complexity ideas with direct experience &mdash; it skips the 7-day landing page and goes straight to a compressed build.
+          </div>
+        </div>
+      </div>
+      <div class="faq-item reveal">
+        <button class="faq-question" onclick="this.parentElement.classList.toggle('open'); const a=this.nextElementSibling; a.style.maxHeight=a.style.maxHeight?'':a.scrollHeight+'px'">
+          What platforms are supported?
+          <svg class="faq-chevron" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd"/></svg>
+        </button>
+        <div class="faq-answer">
+          <div class="faq-answer-inner">
+            iOS (Swift 6 / SwiftUI / XcodeGen) and Web (TypeScript / React / Next.js). Platform is set per-app at registration. Agent definitions use a core + platform overlay pattern so the same pipeline works for both.
+          </div>
+        </div>
+      </div>
+      <div class="faq-item reveal">
+        <button class="faq-question" onclick="this.parentElement.classList.toggle('open'); const a=this.nextElementSibling; a.style.maxHeight=a.style.maxHeight?'':a.scrollHeight+'px'">
+          Is this just code generation?
+          <svg class="faq-chevron" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd"/></svg>
+        </button>
+        <div class="faq-answer">
+          <div class="faq-answer-inner">
+            No. Code is one of 32 agents. APOS covers the entire product lifecycle: signal scanning, idea scoring, demand validation, requirements research, architecture, design, sprint planning, code, testing, review, UX walkthroughs, analytics, A/B testing, and App Store optimisation.
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ─── Final CTA ─── -->
+<section class="cta-section">
+  <div class="container">
+    <div class="section-title reveal">Start shipping</div>
+    <p class="section-desc centered reveal" style="margin-bottom: 40px;">
+      Clone the repo. Run /generate-ideas. Let the pipeline do the rest.
+    </p>
+    <div class="reveal" style="text-align: center;">
+      <div class="hero-cmd" onclick="navigator.clipboard.writeText('git clone https://github.com/mpc-eng/apos.git')">
+        <span class="prompt">$</span>
+        git clone https://github.com/mpc-eng/apos.git
+        <span class="copy-hint">Copy</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ─── Footer ─── -->
+<footer>
+  <div class="container">
+    <div class="footer-inner">
+      <div class="footer-left">
+        <div class="footer-logo">
+          <span class="dot"></span>
+          APOS
+        </div>
+        <span class="footer-copy">MIT License</span>
+      </div>
+      <div class="footer-links">
+        <a href="https://github.com/mpc-eng/apos" target="_blank" rel="noopener">GitHub</a>
+        <a href="#pipeline">Docs</a>
+        <a href="#faq">FAQ</a>
+      </div>
+    </div>
+  </div>
+</footer>
+
+<!-- ─── Scroll Animation ─── -->
+<script>
+const observer = new IntersectionObserver((entries) => {
+  entries.forEach((entry) => {
+    if (entry.isIntersecting) {
+      const delay = entry.target.dataset.delay || 0;
+      setTimeout(() => entry.target.classList.add('visible'), delay);
+      observer.unobserve(entry.target);
+    }
+  });
+}, { threshold: 0.1, rootMargin: '0px 0px -40px 0px' });
+
+document.querySelectorAll('.reveal').forEach((el) => {
+  const parent = el.parentElement;
+  const siblings = [...parent.children].filter(c => c.classList.contains('reveal'));
+  const index = siblings.indexOf(el);
+  if (siblings.length > 1 && index > 0) {
+    el.dataset.delay = index * 80;
+  }
+  observer.observe(el);
+});
+
+document.querySelectorAll('.hero-cmd').forEach(cmd => {
+  cmd.addEventListener('click', () => {
+    const hint = cmd.querySelector('.copy-hint');
+    hint.textContent = 'Copied!';
+    setTimeout(() => hint.textContent = 'Copy', 2000);
+  });
+});
+</script>
+</body>
+</html>
