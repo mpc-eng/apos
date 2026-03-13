@@ -1,0 +1,68 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Action Log",
+  "description": "Append-only audit trail for Mission Control actions.",
+  "type": "object",
+  "required": ["schema_version", "app_slug", "entries"],
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": { "type": "string", "const": "3.4.0" },
+    "app_slug": { "type": "string", "minLength": 1 },
+    "entries": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["timestamp", "action_id", "event"],
+        "additionalProperties": false,
+        "properties": {
+          "timestamp": { "type": "string", "format": "date-time" },
+          "action_id": { "type": "string", "pattern": "^act_[0-9]{3}$" },
+          "event": {
+            "type": "string",
+            "enum": [
+              "created", "started", "completed", "failed",
+              "retry", "blocked", "skipped",
+              "owner_approved", "owner_rejected", "override_applied",
+              "resubmitted", "cascade_blocked", "parallel_group_started",
+              "resumed"
+            ]
+          },
+          "agent": { "type": "string" },
+          "detail": { "type": ["string", "null"] },
+          "error_category": { "type": ["string", "null"] },
+          "context_bundle_kb": { "type": ["number", "null"] },
+          "input_tokens": {
+            "type": ["integer", "null"],
+            "description": "Approximate input tokens consumed by the subagent call. Null if unavailable or not a subagent action."
+          },
+          "output_tokens": {
+            "type": ["integer", "null"],
+            "description": "Approximate output tokens produced by the subagent call. Null if unavailable or not a subagent action."
+          },
+          "context_bundle_files": {
+            "type": ["array", "null"],
+            "description": "Files included in the subagent context bundle with sizes. Null if not a subagent action.",
+            "items": {
+              "type": "object",
+              "required": ["path", "size_kb"],
+              "properties": {
+                "path": { "type": "string" },
+                "size_kb": { "type": "number" }
+              }
+            }
+          },
+          "lint_violations": {
+            "type": ["integer", "null"],
+            "description": "Number of violations found by review-lint.sh pre-pass. Null if lint was not run for this action."
+          },
+          "duration_ms": { "type": ["integer", "null"] },
+          "blocked_by": {
+            "type": ["string", "null"],
+            "pattern": "^act_[0-9]{3}$",
+            "description": "For cascade_blocked events: the failed action that caused this block. Null for other event types."
+          }
+        }
+      }
+    }
+  }
+}

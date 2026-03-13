@@ -1,0 +1,317 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Clone Agent Output",
+  "description": "Differentiation analysis output from clone and differentiate process",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "agent",
+    "timestamp",
+    "input_type",
+    "input_description",
+    "reference_profile",
+    "gap_analysis",
+    "audience_segments",
+    "failed_clones",
+    "differentiation_angles",
+    "unknowns",
+    "decision_card",
+    "self_check"
+  ],
+  "properties": {
+    "schema_version": {
+      "type": "string",
+      "const": "3.4.0"
+    },
+    "agent": {
+      "type": "string",
+      "const": "CLONE"
+    },
+    "timestamp": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "input_type": {
+      "type": "string",
+      "enum": ["external_app", "ideas_json_ref"]
+    },
+    "input_description": {
+      "type": "string",
+      "description": "Owner's original input, verbatim"
+    },
+    "reference_id": {
+      "type": ["string", "null"],
+      "description": "ideas.json ID if input_type is ideas_json_ref, null otherwise"
+    },
+    "reference_profile": {
+      "type": "object",
+      "required": ["name", "category", "platform", "pricing", "core_features", "user_hates", "recent_trajectory"],
+      "properties": {
+        "name": { "type": "string" },
+        "category": { "type": "string" },
+        "platform": {
+          "type": "string",
+          "enum": ["ios", "android", "web", "cross_platform"]
+        },
+        "pricing": { "type": "string" },
+        "estimated_downloads": { "type": ["string", "null"] },
+        "app_store_rating": { "type": ["number", "null"] },
+        "review_count": { "type": ["integer", "null"] },
+        "funding": { "type": ["string", "null"] },
+        "core_features": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "user_loves": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "user_hates": {
+          "type": "array",
+          "minItems": 3,
+          "items": { "type": "string" }
+        },
+        "recent_trajectory": {
+          "type": "string",
+          "enum": ["growing", "stable", "declining", "shutdown"]
+        },
+        "kill_reason_from_ideas": { "type": ["string", "null"] }
+      }
+    },
+    "gap_analysis": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["dimension", "gap_type", "description", "evidence", "solo_buildable"],
+        "properties": {
+          "dimension": {
+            "type": "string",
+            "enum": [
+              "audience_niche",
+              "feature_gap",
+              "pricing_gap",
+              "ux_accessibility_gap",
+              "regulatory_market_gap",
+              "platform_gap",
+              "value_chain_coupling_gap"
+            ]
+          },
+          "gap_type": {
+            "type": "string",
+            "enum": ["structural", "temporal", "cosmetic"]
+          },
+          "description": { "type": "string" },
+          "evidence": {
+            "type": "array",
+            "minItems": 1,
+            "items": { "type": "string" }
+          },
+          "solo_buildable": { "type": "boolean" },
+          "defensibility_months": {
+            "type": ["integer", "null"],
+            "minimum": 0
+          },
+          "exploited_by": {
+            "type": ["array", "null"],
+            "items": { "type": "string" }
+          }
+        }
+      }
+    },
+    "audience_segments": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["segment", "served_status", "struggle_evidence"],
+        "properties": {
+          "segment": { "type": "string" },
+          "size_estimate": { "type": ["string", "null"] },
+          "served_status": {
+            "type": "string",
+            "enum": ["well_served", "under_served", "unserved"]
+          },
+          "struggle_evidence": { "type": "string" }
+        }
+      }
+    },
+    "failed_clones": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["name", "angle", "outcome", "lesson"],
+        "properties": {
+          "name": { "type": "string" },
+          "angle": { "type": "string" },
+          "outcome": {
+            "type": "string",
+            "enum": ["succeeded", "failed", "stagnated"]
+          },
+          "evidence": { "type": ["string", "null"] },
+          "lesson": { "type": "string" }
+        }
+      }
+    },
+    "differentiation_angles": {
+      "type": "array",
+      "minItems": 3,
+      "maxItems": 5,
+      "items": {
+        "type": "object",
+        "required": [
+          "rank",
+          "angle_title",
+          "dimension",
+          "gap_type",
+          "target_user",
+          "user_job",
+          "current_workaround",
+          "switching_trigger",
+          "demand_narrative",
+          "improvement_hypothesis",
+          "competitor_gap",
+          "competitive_density",
+          "estimated_complexity",
+          "idea_entry"
+        ],
+        "properties": {
+          "rank": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 5
+          },
+          "angle_title": { "type": "string" },
+          "dimension": {
+            "type": "string",
+            "enum": [
+              "audience_niche",
+              "feature_gap",
+              "pricing_gap",
+              "ux_accessibility_gap",
+              "regulatory_market_gap",
+              "platform_gap",
+              "value_chain_coupling_gap"
+            ]
+          },
+          "gap_type": {
+            "type": "string",
+            "enum": ["structural", "temporal", "cosmetic"]
+          },
+          "target_user": { "type": "string" },
+          "user_job": { "type": "string" },
+          "current_workaround": { "type": "string" },
+          "switching_trigger": { "type": "string" },
+          "return_trigger": { "type": ["string", "null"] },
+          "demand_narrative": { "type": "string" },
+          "improvement_hypothesis": { "type": "string" },
+          "competitor_gap": { "type": "string" },
+          "competitive_density": {
+            "type": "string",
+            "enum": ["vacant", "sparse", "crowded"]
+          },
+          "estimated_complexity": {
+            "type": "string",
+            "enum": ["low", "medium", "high"]
+          },
+          "idea_entry": {
+            "type": "object",
+            "required": [
+              "id",
+              "date",
+              "title",
+              "one_liner",
+              "signal_sources",
+              "signal_strength",
+              "target_user",
+              "user_job",
+              "current_workaround",
+              "switching_trigger",
+              "demand_narrative",
+              "improvement_hypothesis",
+              "competitor_gap",
+              "estimated_complexity",
+              "score",
+              "status",
+              "clone_output_ref",
+              "clone_source"
+            ],
+            "properties": {
+              "id": { "type": "string", "pattern": "^idea-\\d{8}-\\d{3}$" },
+              "date": { "type": "string", "format": "date" },
+              "title": { "type": "string" },
+              "one_liner": { "type": "string" },
+              "signal_sources": {
+                "type": "array",
+                "items": { "type": "string" }
+              },
+              "signal_strength": { "type": "string" },
+              "target_user": { "type": "string" },
+              "user_job": { "type": "string" },
+              "current_workaround": { "type": "string" },
+              "switching_trigger": { "type": "string" },
+              "demand_narrative": { "type": "string" },
+              "improvement_hypothesis": { "type": "string" },
+              "competitor_gap": { "type": "string" },
+              "estimated_complexity": {
+                "type": "string",
+                "enum": ["low", "medium", "high"]
+              },
+              "score": {
+                "type": "integer",
+                "const": 4
+              },
+              "status": {
+                "type": "string",
+                "const": "cloned"
+              },
+              "kill_reason": { "type": ["string", "null"] },
+              "clone_output_ref": { "type": "string" },
+              "clone_source": { "type": "string" }
+            }
+          }
+        }
+      }
+    },
+    "unknowns": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "type": "string" }
+    },
+    "decision_card": {
+      "type": "string"
+    },
+    "self_check": {
+      "type": "object",
+      "required": [
+        "agent_badge",
+        "output_schema_valid",
+        "all_modules_completed",
+        "minimum_angles_generated",
+        "all_angles_have_jtbd",
+        "all_angles_have_demand_narrative",
+        "all_angles_have_improvement_hypothesis",
+        "no_cosmetic_only_angles",
+        "duplicate_check_passed",
+        "gap_evidence_cited",
+        "unknowns_listed"
+      ],
+      "properties": {
+        "agent_badge": {
+          "type": "string",
+          "const": "[CLONE]"
+        },
+        "output_schema_valid": { "type": "boolean" },
+        "all_modules_completed": { "type": "boolean" },
+        "minimum_angles_generated": { "type": "boolean" },
+        "all_angles_have_jtbd": { "type": "boolean" },
+        "all_angles_have_demand_narrative": { "type": "boolean" },
+        "all_angles_have_improvement_hypothesis": { "type": "boolean" },
+        "no_cosmetic_only_angles": { "type": "boolean" },
+        "duplicate_check_passed": { "type": "boolean" },
+        "gap_evidence_cited": { "type": "boolean" },
+        "unknowns_listed": { "type": "boolean" }
+      }
+    }
+  }
+}

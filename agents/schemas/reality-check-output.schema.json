@@ -1,0 +1,112 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "REALITY-CHECK Output",
+  "description": "Validates REALITY-CHECK advisory agent output. Never blocks — review_passed is always true. Conditionally requires monday_session data when context is 'monday_session'.",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "agent",
+    "timestamp",
+    "review_passed",
+    "context",
+    "timeout_state",
+    "idea_filter",
+    "self_check"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": { "type": "string", "const": "3.4.0" },
+    "agent": { "type": "string", "const": "REALITY-CHECK" },
+    "timestamp": { "type": "string", "format": "date-time" },
+    "review_passed": {
+      "type": "boolean",
+      "const": true,
+      "description": "Advisory agents never block the pipeline; always true."
+    },
+    "context": {
+      "type": "string",
+      "enum": ["daily", "monday_session"]
+    },
+    "timeout_state": {
+      "type": "string",
+      "enum": ["completed", "timed_out"]
+    },
+    "idea_filter": {
+      "type": "object",
+      "required": [
+        "suppressed_ids",
+        "disappointment_loop_active",
+        "consecutive_low_signal_batches",
+        "cognitive_load_flag",
+        "morning_framing"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "suppressed_ids": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "disappointment_loop_active": { "type": "boolean" },
+        "consecutive_low_signal_batches": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "cognitive_load_flag": { "type": "boolean" },
+        "morning_framing": { "type": "string" }
+      }
+    },
+    "monday_session": {
+      "type": "object",
+      "required": [
+        "build_momentum_signal",
+        "system_health",
+        "kill_log_pattern",
+        "session_framing_note"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "build_momentum_signal": {
+          "type": "string",
+          "enum": ["strong", "moderate", "stalled"]
+        },
+        "system_health": {
+          "type": "object",
+          "required": ["manual_file_movements", "schema_failures_this_week", "health_status"],
+          "additionalProperties": false,
+          "properties": {
+            "manual_file_movements": { "type": "integer", "minimum": 0 },
+            "schema_failures_this_week": { "type": "integer", "minimum": 0 },
+            "health_status": {
+              "type": "string",
+              "enum": ["healthy", "degraded", "unhealthy"]
+            }
+          }
+        },
+        "kill_log_pattern": {
+          "oneOf": [
+            { "type": "string" },
+            { "type": "null" }
+          ]
+        },
+        "session_framing_note": { "type": "string" }
+      }
+    },
+    "self_check": {
+      "type": "object",
+      "required": ["agent_badge", "output_schema_valid", "gate_type"],
+      "additionalProperties": false,
+      "properties": {
+        "agent_badge": { "type": "string", "const": "[REALITY-CHECK]" },
+        "output_schema_valid": { "type": "boolean" },
+        "gate_type": { "type": "string", "const": "advisory" }
+      }
+    }
+  },
+  "if": {
+    "properties": { "context": { "const": "monday_session" } },
+    "required": ["context"]
+  },
+  "then": {
+    "required": ["monday_session"]
+  }
+}

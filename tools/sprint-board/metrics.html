@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>APOS Metrics Dashboard</title>
+<style>
+  :root {
+    --bg: #0d1117;
+    --surface: #161b22;
+    --surface-hover: #1c2333;
+    --border: #30363d;
+    --text: #e6edf3;
+    --text-muted: #8b949e;
+    --accent: #58a6ff;
+    --green: #3fb950;
+    --yellow: #d29922;
+    --red: #f85149;
+    --orange: #db6d28;
+    --purple: #bc8cff;
+    --pink: #f778ba;
+    --radius: 8px;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'SF Pro', system-ui, sans-serif; background: var(--bg); color: var(--text); }
+
+  /* Header */
+  .header { padding: 16px 24px; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 16px; }
+  .header h1 { font-size: 18px; font-weight: 600; }
+  .header-stats { display: flex; gap: 16px; margin-left: auto; font-size: 13px; color: var(--text-muted); }
+  .stat { display: flex; align-items: center; gap: 5px; }
+  .stat .dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
+  .nav-tabs { display: flex; gap: 2px; }
+  .nav-tab { padding: 6px 14px; border-radius: 6px; font-size: 13px; text-decoration: none; color: var(--text-muted); transition: all 0.15s; }
+  .nav-tab:hover { color: var(--text); background: var(--surface-hover); }
+  .nav-tab.active { color: var(--accent); background: rgba(88,166,255,0.1); }
+  .app-select { background: var(--surface); color: var(--text); border: 1px solid var(--border); border-radius: 6px; padding: 4px 8px; font-size: 13px; cursor: pointer; }
+
+  /* Summary ribbon */
+  .summary-ribbon { display: flex; gap: 12px; padding: 16px 24px; flex-wrap: wrap; }
+  .summary-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 12px 16px; min-width: 140px; flex: 1; }
+  .summary-label { font-size: 11px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px; }
+  .summary-value { font-size: 24px; font-weight: 700; }
+  .summary-sub { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+
+  /* Chart grid */
+  .chart-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(420px, 1fr)); gap: 16px; padding: 0 24px 24px; }
+  .chart-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px; }
+  .chart-title { font-size: 14px; font-weight: 600; margin-bottom: 12px; display: flex; align-items: center; gap: 8px; }
+  .chart-title .badge { font-size: 10px; padding: 2px 6px; border-radius: 4px; font-weight: 500; }
+  .chart-canvas { position: relative; width: 100%; height: 260px; }
+  .no-data { display: flex; align-items: center; justify-content: center; height: 260px; color: var(--text-muted); font-size: 13px; font-style: italic; }
+
+  /* Cross-app section */
+  .cross-app { margin: 0 24px 24px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); }
+  .cross-app-header { padding: 12px 16px; border-bottom: 1px solid var(--border); font-size: 14px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 8px; }
+  .cross-app-header .arrow { transition: transform 0.2s; }
+  .cross-app-body { padding: 16px; }
+  .cross-app-body.collapsed { display: none; }
+  .compare-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  .compare-table th { text-align: left; padding: 8px 12px; color: var(--text-muted); border-bottom: 1px solid var(--border); font-weight: 500; }
+  .compare-table td { padding: 8px 12px; border-bottom: 1px solid var(--border); }
+  .compare-table tr:last-child td { border-bottom: none; }
+
+  /* Rate coloring */
+  .rate-good { color: var(--green); }
+  .rate-warn { color: var(--yellow); }
+  .rate-bad { color: var(--red); }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>APOS Metrics</h1>
+  <nav class="nav-tabs" id="nav"></nav>
+  <select class="app-select" id="appSelect"></select>
+  <div class="header-stats" id="headerStats"></div>
+</div>
+
+<div class="summary-ribbon" id="summaryRibbon"></div>
+<div class="chart-grid" id="chartGrid"></div>
+<div class="cross-app" id="crossApp"></div>
+
+<script>
+function escapeHTML(str) {
+  if (str == null) return '';
+  return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+}
+
+let globalState = null;
+let metricsData = null;
+let currentSlug = null;
+
+function loadChartJS() {
+  return new Promise(resolve => {
+    const s = document.createElement('script');
+    s.src = 'https://cdn.jsdelivr.net/npm/chart.js@4/dist/chart.umd.min.js';
+    s.onload = resolve;
+    document.head.appendChild(s);
+  });
+}
+
+async function fetchJSON(url) {
+  const r = await fetch(url);
+  return r.json();
+}
+
+function rateClass(rate, goodThreshold = 0.7, warnThreshold = 0.5) {
+  if (rate >= goodThreshold) return 'rate-good';
+  if (rate >= warnThreshold) return 'rate-warn';
+  return 'rate-bad';
+}
+
+function pct(rate) { return (rate * 100).toFixed(0) + '%'; }
+
+function specLabel(id) {
+  return id.replace(/^\d{3}-/, '').replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+}
+
+async function init() {
+  globalState = await fetchJSON('/api/state');
+  currentSlug = window.location.pathname.split('/').pop() || globalState.active_app_slug;
+  buildNav();
+  buildAppSelect();
+  await loadChartJS();
+  Chart.defaults.color = '#8b949e';
+  Chart.defaults.borderColor = '#30363d';
+  await loadApp(currentSlug);
+}
+
+function buildNav() {
+  const slug = currentSlug || globalState.active_app_slug;
+  document.getElementById('nav').innerHTML = [
+    { label: 'Pipeline', href: '/' },
+    { label: 'Sprint', href: `/sprint/${slug}` },
+    { label: 'Lineage', href: `/lineage/${slug}` },
+    { label: 'Metrics', href: `/metrics/${slug}`, active: true },
+    { label: 'Decisions', href: `/decisions/${slug}` },
+  ].map(t => `<a href="${t.href}" class="nav-tab${t.active ? ' active' : ''}">${t.label}</a>`).join('');
+}
+
+function buildAppSelect() {
+  const sel = document.getElementById('appSelect');
+  sel.innerHTML = (globalState.app_registry || [])
+    .map(a => `<option value="${escapeHTML(a.slug)}" ${a.slug === currentSlug ? 'selected' : ''}>${escapeHTML(a.name)}</option>`)
+    .join('');
+  sel.addEventListener('change', () => {
+    currentSlug = sel.value;
+    history.replaceState(null, '', `/metrics/${currentSlug}`);
+    buildNav();
+    loadApp(currentSlug);
+  });
+}
+
+async function loadApp(slug) {
+  metricsData = await fetchJSON(`/api/app/${slug}/metrics`);
+  renderSummary();
+  renderCharts();
+  loadCrossApp();
+}
+
+function renderSummary() {
+  const d = metricsData;
+  const bp = d.build_progress;
+  const ribbon = document.getElementById('summaryRibbon');
+  ribbon.innerHTML = [
+    { label: 'Specs Built', value: bp.length, sub: `${d.amendments.originals} original + ${d.amendments.total} amendments` },
+    { label: 'Compile 1st Pass', value: pct(d.first_pass.compile.rate), sub: `${d.first_pass.compile.passed}/${d.first_pass.compile.total}`, cls: rateClass(d.first_pass.compile.rate) },
+    { label: 'Test 1st Pass', value: pct(d.first_pass.test.rate), sub: `${d.first_pass.test.passed}/${d.first_pass.test.total}`, cls: rateClass(d.first_pass.test.rate) },
+    { label: 'Review 1st Pass', value: pct(d.first_pass.review.rate), sub: `${d.first_pass.review.passed}/${d.first_pass.review.total}`, cls: rateClass(d.first_pass.review.rate) },
+    { label: 'Amendment Rate', value: pct(d.amendments.rate), sub: `${d.amendments.total} / ${d.amendments.originals} specs`, cls: rateClass(1 - d.amendments.rate) },
+    { label: 'Total Tests', value: d.test_coverage.max, sub: `mean ${d.test_coverage.mean} per spec` },
+  ].map(c => `
+    <div class="summary-card">
+      <div class="summary-label">${c.label}</div>
+      <div class="summary-value ${c.cls || ''}">${c.value}</div>
+      <div class="summary-sub">${c.sub}</div>
+    </div>
+  `).join('');
+}
+
+function renderCharts() {
+  const grid = document.getElementById('chartGrid');
+  grid.innerHTML = '';
+  const d = metricsData;
+
+  // 1. First-Pass Rates (line chart)
+  addChart(grid, 'First-Pass Success Rates', 'line', d.first_pass_by_sprint.length > 0, () => ({
+    labels: d.first_pass_by_sprint.map(s => `Sprint ${s.sprint}`),
+    datasets: [
+      { label: 'Compile', data: d.first_pass_by_sprint.map(s => +(s.compile * 100).toFixed(1)), borderColor: '#3fb950', backgroundColor: 'rgba(63,185,80,0.1)', tension: 0.3, fill: false },
+      { label: 'Test', data: d.first_pass_by_sprint.map(s => +(s.test * 100).toFixed(1)), borderColor: '#d29922', backgroundColor: 'rgba(210,153,34,0.1)', tension: 0.3, fill: false },
+      { label: 'Review', data: d.first_pass_by_sprint.map(s => +(s.review * 100).toFixed(1)), borderColor: '#bc8cff', backgroundColor: 'rgba(188,140,255,0.1)', tension: 0.3, fill: false },
+    ],
+  }), { scales: { y: { beginAtZero: true, max: 100, ticks: { callback: v => v + '%' } } } });
+
+  // 2. Retry Distribution (grouped bar)
+  addChart(grid, 'Mean Retry Attempts by Sprint', 'bar', d.retry_distribution.compile.by_sprint.length > 0, () => ({
+    labels: d.retry_distribution.compile.by_sprint.map(s => `Sprint ${s.sprint}`),
+    datasets: [
+      { label: 'Compile', data: d.retry_distribution.compile.by_sprint.map(s => +s.mean), backgroundColor: 'rgba(63,185,80,0.7)' },
+      { label: 'Test', data: d.retry_distribution.test.by_sprint.map(s => +s.mean), backgroundColor: 'rgba(210,153,34,0.7)' },
+      { label: 'Review', data: d.retry_distribution.review.by_sprint.map(s => +s.mean), backgroundColor: 'rgba(188,140,255,0.7)' },
+    ],
+  }), { scales: { y: { beginAtZero: true, title: { display: true, text: 'Mean Attempts' } } } });
+
+  // 3. Test Coverage (bar + line combo)
+  addChart(grid, 'Test Coverage by Sprint', 'bar', d.test_coverage.by_sprint.length > 0, () => ({
+    labels: d.test_coverage.by_sprint.map(s => `Sprint ${s.sprint}`),
+    datasets: [
+      { label: 'New Tests', data: d.test_coverage.by_sprint.map(s => s.delta), backgroundColor: 'rgba(63,185,80,0.5)', order: 2 },
+      { label: 'Cumulative', data: d.test_coverage.by_sprint.map(s => s.cumulative), type: 'line', borderColor: '#58a6ff', backgroundColor: 'transparent', tension: 0.3, order: 1, pointRadius: 4 },
+    ],
+  }), { scales: { y: { beginAtZero: true, title: { display: true, text: 'Tests' } } } });
+
+  // 4. Sprint Velocity (stacked bar)
+  addChart(grid, 'Sprint Velocity', 'bar', d.sprint_velocity.length > 0, () => ({
+    labels: d.sprint_velocity.map(s => `Sprint ${s.sprint}`),
+    datasets: [
+      { label: 'Specs', data: d.sprint_velocity.map(s => s.specs), backgroundColor: 'rgba(88,166,255,0.7)' },
+      { label: 'Amendments', data: d.sprint_velocity.map(s => s.amendments), backgroundColor: 'rgba(219,109,40,0.7)' },
+    ],
+  }), { scales: { y: { beginAtZero: true, stacked: true, title: { display: true, text: 'Items' } }, x: { stacked: true } } });
+
+  // 5. Amendment Rate (horizontal bar)
+  const amendParents = d.amendments.per_parent;
+  addChart(grid, 'Amendments per Spec', 'bar', amendParents.length > 0, () => ({
+    labels: amendParents.map(p => specLabel(p.parent)),
+    datasets: [{ label: 'Amendments', data: amendParents.map(p => p.count), backgroundColor: 'rgba(219,109,40,0.7)', borderColor: 'rgba(219,109,40,1)', borderWidth: 1 }],
+  }), { indexAxis: 'y', scales: { x: { beginAtZero: true, ticks: { stepSize: 1 } } } });
+
+  // 6. Error Categories (horizontal bar)
+  const errEntries = Object.entries(d.error_categories).sort((a, b) => b[1] - a[1]);
+  addChart(grid, 'Error Categories', 'bar', errEntries.length > 0, () => ({
+    labels: errEntries.map(([k]) => k.replace(/_/g, ' ')),
+    datasets: [{ label: 'Count', data: errEntries.map(([, v]) => v), backgroundColor: 'rgba(248,81,73,0.7)' }],
+  }), { indexAxis: 'y', scales: { x: { beginAtZero: true, ticks: { stepSize: 1 } } } }, 'No categorised errors recorded in action log');
+
+  // 7. Context Efficiency
+  addChart(grid, 'Context Efficiency', 'line', d.context_efficiency.available, () => {
+    const bundleData = d.context_efficiency.bundles;
+    return {
+      labels: bundleData.map((b, i) => b.agent || `Action ${i + 1}`),
+      datasets: [{ label: 'Bundle Size (KB)', data: bundleData.map(b => b.kb), borderColor: '#58a6ff', tension: 0.3 }],
+    };
+  }, { scales: { y: { beginAtZero: true, title: { display: true, text: 'KB' } } } }, 'Token & context instrumentation not yet active');
+}
+
+function addChart(container, title, type, hasData, dataFn, options, noDataMsg) {
+  const card = document.createElement('div');
+  card.className = 'chart-card';
+  card.innerHTML = `<div class="chart-title">${escapeHTML(title)}</div>`;
+
+  if (!hasData) {
+    card.innerHTML += `<div class="no-data">${escapeHTML(noDataMsg || 'Not enough data yet')}</div>`;
+    container.appendChild(card);
+    return;
+  }
+
+  const canvasWrap = document.createElement('div');
+  canvasWrap.className = 'chart-canvas';
+  const canvas = document.createElement('canvas');
+  canvasWrap.appendChild(canvas);
+  card.appendChild(canvasWrap);
+  container.appendChild(card);
+
+  new Chart(canvas, {
+    type,
+    data: dataFn(),
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { labels: { boxWidth: 12, padding: 12, font: { size: 11 } } },
+      },
+      ...options,
+    },
+  });
+}
+
+async function loadCrossApp() {
+  const cross = await fetchJSON('/api/metrics/cross-app');
+  const el = document.getElementById('crossApp');
+
+  if (!cross.comparison_available) {
+    el.innerHTML = `
+      <div class="cross-app-header">Cross-App Comparison</div>
+      <div class="cross-app-body"><div class="no-data" style="height:60px">Only one app with build data — comparison available when 2+ apps are built</div></div>
+    `;
+    return;
+  }
+
+  const apps = cross.apps;
+  el.innerHTML = `
+    <div class="cross-app-header" onclick="this.nextElementSibling.classList.toggle('collapsed')">
+      <span class="arrow">&#9660;</span> Cross-App Comparison (${apps.length} apps)
+    </div>
+    <div class="cross-app-body">
+      <table class="compare-table">
+        <thead><tr>
+          <th>Metric</th>
+          ${apps.map(a => `<th>${escapeHTML(a.name)}</th>`).join('')}
+        </tr></thead>
+        <tbody>
+          <tr><td>Specs Built</td>${apps.map(a => `<td>${a.specs_built}</td>`).join('')}</tr>
+          <tr><td>Sprints</td>${apps.map(a => `<td>${a.sprints}</td>`).join('')}</tr>
+          <tr><td>Compile 1st Pass</td>${apps.map(a => `<td class="${rateClass(a.compile_first_pass)}">${pct(a.compile_first_pass)}</td>`).join('')}</tr>
+          <tr><td>Test 1st Pass</td>${apps.map(a => `<td class="${rateClass(a.test_first_pass)}">${pct(a.test_first_pass)}</td>`).join('')}</tr>
+          <tr><td>Review 1st Pass</td>${apps.map(a => `<td class="${rateClass(a.review_first_pass)}">${pct(a.review_first_pass)}</td>`).join('')}</tr>
+          <tr><td>Amendment Rate</td>${apps.map(a => `<td class="${rateClass(1 - a.amendment_rate)}">${pct(a.amendment_rate)}</td>`).join('')}</tr>
+          <tr><td>Total Tests</td>${apps.map(a => `<td>${a.total_tests}</td>`).join('')}</tr>
+        </tbody>
+      </table>
+    </div>
+  `;
+}
+
+init();
+</script>
+</body>
+</html>

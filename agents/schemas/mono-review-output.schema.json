@@ -1,0 +1,118 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "MONO-REVIEW Output",
+  "description": "Validates output from the MONO-REVIEW advisory agent. Advisory agents never block the pipeline (review_passed is always true).",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "agent",
+    "timestamp",
+    "review_passed",
+    "context",
+    "timeout_state",
+    "flags",
+    "self_check"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": { "type": "string", "const": "3.4.0" },
+    "agent": { "type": "string", "const": "MONO-REVIEW" },
+    "timestamp": { "type": "string", "format": "date-time" },
+    "review_passed": {
+      "type": "boolean",
+      "const": true,
+      "description": "Advisory agents never block the pipeline; always true."
+    },
+    "context": {
+      "type": "string",
+      "enum": ["paywall_spec", "monday_analytics"]
+    },
+    "timeout_state": {
+      "type": "string",
+      "enum": ["completed", "timed_out"]
+    },
+    "flags": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["flag_type", "severity", "description", "recommendation"],
+        "additionalProperties": false,
+        "properties": {
+          "flag_type": {
+            "type": "string",
+            "enum": [
+              "pricing_tier_mismatch",
+              "win_back_logic_absent",
+              "endowment_copy_generic",
+              "aarrr_pattern_mismatch",
+              "churn_intervention_wrong",
+              "win_back_eligible_rate_low",
+              "trial_length_miscalibrated",
+              "annual_monthly_ratio_unhealthy",
+              "paywall_timing_too_early",
+              "paywall_timing_too_late",
+              "geographic_pricing_absent"
+            ]
+          },
+          "severity": {
+            "type": "string",
+            "enum": ["high", "medium", "low"]
+          },
+          "description": { "type": "string" },
+          "recommendation": { "type": "string" }
+        }
+      }
+    },
+    "enriched_diagnosis": {
+      "type": "object",
+      "required": ["aarrr_pattern", "intervention_type", "do_not_test", "enriched_diagnosis_source"],
+      "additionalProperties": false,
+      "properties": {
+        "aarrr_pattern": {
+          "type": "string",
+          "enum": ["acquisition", "activation", "retention", "revenue", "referral", "not_diagnosed"]
+        },
+        "intervention_type": {
+          "type": "string",
+          "enum": [
+            "onboarding_optimization",
+            "feature_education",
+            "engagement_loop",
+            "pricing_adjustment",
+            "referral_incentive",
+            "no_intervention"
+          ]
+        },
+        "do_not_test": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "enriched_diagnosis_source": {
+          "type": "string",
+          "enum": ["live", "fallback"]
+        }
+      }
+    },
+    "self_check": {
+      "type": "object",
+      "required": ["agent_badge", "output_schema_valid", "gate_type"],
+      "additionalProperties": false,
+      "properties": {
+        "agent_badge": { "type": "string", "const": "[MONO-REVIEW]" },
+        "output_schema_valid": { "type": "boolean" },
+        "gate_type": { "type": "string", "const": "advisory" }
+      }
+    }
+  },
+  "if": {
+    "properties": { "context": { "const": "monday_analytics" } },
+    "required": ["context"]
+  },
+  "then": {
+    "required": [
+      "schema_version", "agent", "timestamp", "review_passed",
+      "context", "timeout_state", "flags", "self_check",
+      "enriched_diagnosis"
+    ]
+  }
+}

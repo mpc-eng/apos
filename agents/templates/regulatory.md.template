@@ -1,0 +1,29 @@
+# Regulatory Constraint Register: {{APP_NAME}}
+
+## Compliance Matrix
+
+| Constraint ID | Requirement | Spec AC(s) | Code File(s) | Test(s) | Status |
+|---|---|---|---|---|---|
+| | | — | — | — | Gap |
+
+## Status Values
+
+- **Covered** — Constraint traces to AC(s), code, AND test(s)
+- **Partial** — Constraint traces to AC(s) and code but missing test coverage
+- **Gap** — Constraint identified but not yet covered by any AC
+- **Deferred** — Explicitly deferred to a later phase (with phase noted)
+- **Not Applicable** — Assessed and determined not relevant (with rationale)
+
+## Coverage Summary
+
+- Total constraints: 0
+- Covered: 0
+- Partial: 0
+- Gap: 0
+- Deferred: 0 (Phase 3: 0, Phase 4: 0)
+
+## Regulatory Change Watch
+
+| Rule ID | Current Value | Last Verified | Next Check | Risk if Changed |
+|---|---|---|---|---|
+| | | | | |

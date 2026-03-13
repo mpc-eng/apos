@@ -1,0 +1,145 @@
+{
+  "tracker_version": "1.0.0",
+  "description": "Machine-readable platform readiness tracker. Checked by Orchestrator before build and by /add-app during registration. Uses tracker_version (not schema_version) as this is system state, not an agent output schema.",
+  "phases": {
+    "A": {
+      "name": "Minimum viable multi-track",
+      "status": "complete",
+      "completed_date": "2026-03-08"
+    },
+    "B": {
+      "name": "Full platform parity",
+      "status": "complete",
+      "completed_date": "2026-03-11",
+      "trigger": "web platform app reaches build stage",
+      "trigger_check": "app-state.json > pipeline.current_stage == 'build' AND app.platform == 'web'",
+      "completed_by": "causal-eng-intel reaching build stage"
+    },
+    "C": {
+      "name": "Profile system",
+      "status": "incomplete",
+      "trigger": "third evaluation profile registered",
+      "trigger_check": "state.json > evaluation_profiles.length > 2"
+    }
+  },
+  "platform_agents": {
+    "description": "For each platform-dependent agent: tracks whether core + platform overlay files exist.",
+    "agents": {
+      "code": {
+        "core": ".claude/agents/core/code-agent.core.md",
+        "overlays": {
+          "ios": ".claude/agents/platforms/ios/code-agent.ios.md",
+          "web": ".claude/agents/platforms/web/code-agent.web.md"
+        },
+        "status": { "ios": "ready", "web": "ready" },
+        "phase": "A"
+      },
+      "test": {
+        "core": null,
+        "overlays": {
+          "ios": null,
+          "web": ".claude/agents/platforms/web/test-agent.web.md"
+        },
+        "monolithic": ".claude/agents/test-agent.md",
+        "status": { "ios": "monolithic", "web": "ready" },
+        "phase": "B",
+        "phase_item": "B1"
+      },
+      "review": {
+        "core": null,
+        "overlays": {
+          "ios": null,
+          "web": ".claude/agents/platforms/web/review-agent.web.md"
+        },
+        "monolithic": ".claude/agents/review-agent.md",
+        "status": { "ios": "monolithic", "web": "ready" },
+        "phase": "B",
+        "phase_item": "B2"
+      },
+      "spec": {
+        "core": null,
+        "overlays": {
+          "ios": null,
+          "web": ".claude/agents/platforms/web/spec-agent.web.md"
+        },
+        "monolithic": ".claude/agents/spec-agent.md",
+        "status": { "ios": "monolithic", "web": "ready" },
+        "phase": "B",
+        "phase_item": "B3"
+      },
+      "design": {
+        "core": null,
+        "overlays": {
+          "ios": null,
+          "web": ".claude/agents/platforms/web/design-agent.web.md"
+        },
+        "monolithic": ".claude/agents/design-agent.md",
+        "status": { "ios": "monolithic", "web": "ready" },
+        "phase": "B",
+        "phase_item": "B4"
+      },
+      "architecture": {
+        "core": null,
+        "overlays": {
+          "ios": null,
+          "web": ".claude/agents/platforms/web/architecture-agent.web.md"
+        },
+        "monolithic": ".claude/agents/architecture-agent.md",
+        "status": { "ios": "monolithic", "web": "ready" },
+        "phase": "B",
+        "phase_item": "B5"
+      },
+      "orchestrator": {
+        "core": null,
+        "overlays": {
+          "ios": null,
+          "web": null
+        },
+        "monolithic": ".claude/agents/orchestrator-agent.md",
+        "status": { "ios": "monolithic", "web": "missing" },
+        "phase": "B",
+        "phase_item": "B6"
+      },
+      "diagnose": {
+        "core": null,
+        "overlays": {
+          "ios": null,
+          "web": null
+        },
+        "monolithic": ".claude/agents/diagnose-agent.md",
+        "status": { "ios": "monolithic", "web": "missing" },
+        "phase": "B",
+        "phase_item": "B7"
+      }
+    }
+  },
+  "gate_agents": {
+    "ios": {
+      "gate_review": ".claude/agents/ios-review-agent.md",
+      "status": "ready"
+    },
+    "web": {
+      "gate_review": ".claude/agents/web-review-agent.md",
+      "status": "missing",
+      "phase_item": "B8"
+    }
+  },
+  "build_toolchain": {
+    "ios": {
+      "build_command": "xcodebuild",
+      "test_command": "xcodebuild test",
+      "project_generator": "xcodegen",
+      "deploy_target": "testflight",
+      "status": "ready"
+    },
+    "web": {
+      "build_command": "npm run build",
+      "test_command": "npx vitest run",
+      "e2e_command": "npx playwright test",
+      "project_generator": "create-next-app",
+      "deploy_target": "vercel",
+      "status": "ready",
+      "phase_item": "B9"
+    }
+  }
+}

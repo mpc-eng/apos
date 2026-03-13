@@ -1,0 +1,98 @@
+# XcodeGen project.yml template for APOS iOS apps
+# Replace placeholders before running: xcodegen generate
+#
+# Placeholders:
+#   {{APP_NAME}}         — Target name, no spaces (e.g., MTDLandlord)
+#   {{BUNDLE_ID}}        — Full bundle ID (e.g., com.mtdlandlord.app)
+#   {{BUNDLE_ID_PREFIX}} — Bundle ID prefix (e.g., com.mtdlandlord)
+#   {{APP_GROUP}}        — App Group ID (e.g., group.com.mtdlandlord.app)
+#   {{DISPLAY_NAME}}     — Human-readable name (e.g., MTD Landlord)
+#   {{DEVELOPMENT_TEAM}} — Apple Developer team ID
+
+name: {{APP_NAME}}
+options:
+  bundleIdPrefix: {{BUNDLE_ID_PREFIX}}
+  deploymentTarget:
+    iOS: "17.4"
+  developmentLanguage: en
+  xcodeVersion: "16.0"
+  usesTabs: false
+  indentWidth: 4
+  tabWidth: 4
+  groupSortPosition: top
+  generateEmptyDirectories: true
+
+packages:
+  APOSDesignSystem:
+    path: ../../packages/APOSDesignSystem
+
+targets:
+  {{APP_NAME}}:
+    type: application
+    platform: iOS
+    deploymentTarget: "17.4"
+    sources:
+      - path: {{APP_NAME}}
+    info:
+      path: {{APP_NAME}}/Info.plist
+      properties:
+        CFBundleIdentifier: {{BUNDLE_ID}}
+        CFBundleName: {{APP_NAME}}
+        CFBundleDisplayName: "{{DISPLAY_NAME}}"
+        CFBundleVersion: "1"
+        CFBundleShortVersionString: "1.0"
+        LSRequiresIPhoneOS: true
+        UISupportedInterfaceOrientations:
+          - UIInterfaceOrientationPortrait
+        UIApplicationSceneManifest:
+          UIApplicationSupportsMultipleScenes: false
+          UISceneConfigurations: {}
+    dependencies:
+      - package: APOSDesignSystem
+    capabilities:
+      appGroups: [{{APP_GROUP}}]
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: {{BUNDLE_ID}}
+        SWIFT_VERSION: "6.0"
+        IPHONEOS_DEPLOYMENT_TARGET: "17.4"
+        DEVELOPMENT_TEAM: {{DEVELOPMENT_TEAM}}
+        SWIFT_EMIT_LOC_STRINGS: YES
+        ENABLE_PREVIEWS: YES
+        SWIFT_STRICT_CONCURRENCY: complete
+      configs:
+        Debug:
+          CODE_SIGN_ENTITLEMENTS: {{APP_NAME}}/{{APP_NAME}}.entitlements
+        Release:
+          CODE_SIGN_ENTITLEMENTS: {{APP_NAME}}/{{APP_NAME}}.entitlements
+
+  {{APP_NAME}}Tests:
+    type: bundle.unit-test
+    platform: iOS
+    deploymentTarget: "17.4"
+    sources:
+      - path: {{APP_NAME}}Tests
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: {{BUNDLE_ID_PREFIX}}.tests
+        SWIFT_VERSION: "6.0"
+        IPHONEOS_DEPLOYMENT_TARGET: "17.4"
+        TEST_HOST: "$(BUILT_PRODUCTS_DIR)/{{APP_NAME}}.app/{{APP_NAME}}"
+        GENERATE_INFOPLIST_FILE: YES
+        DEVELOPMENT_TEAM: ""
+        SWIFT_STRICT_CONCURRENCY: complete
+    dependencies:
+      - target: {{APP_NAME}}
+
+schemes:
+  {{APP_NAME}}:
+    build:
+      targets:
+        {{APP_NAME}}: all
+    test:
+      targets:
+        - {{APP_NAME}}Tests
+    run:
+      config: Debug
+    archive:
+      config: Release

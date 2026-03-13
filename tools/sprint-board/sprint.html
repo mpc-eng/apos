@@ -1,0 +1,762 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>APOS Sprint Board</title>
+<style>
+  :root {
+    --bg: #0d1117;
+    --surface: #161b22;
+    --surface-hover: #1c2333;
+    --border: #30363d;
+    --text: #e6edf3;
+    --text-muted: #8b949e;
+    --accent: #58a6ff;
+    --green: #3fb950;
+    --yellow: #d29922;
+    --red: #f85149;
+    --orange: #db6d28;
+    --purple: #bc8cff;
+    --radius: 8px;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'SF Pro', 'Segoe UI', system-ui, sans-serif; background: var(--bg); color: var(--text); overflow-x: auto; }
+
+  /* Header */
+  .header { padding: 16px 24px; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 16px; position: sticky; top: 0; background: var(--bg); z-index: 100; }
+  .header h1 { font-size: 18px; font-weight: 600; white-space: nowrap; }
+  .app-select { background: var(--surface); border: 1px solid var(--border); color: var(--text); padding: 6px 12px; border-radius: var(--radius); font-size: 14px; cursor: pointer; }
+  .header-stats { display: flex; gap: 16px; margin-left: auto; font-size: 13px; color: var(--text-muted); }
+  .header-stats .stat { display: flex; align-items: center; gap: 4px; }
+  .header-stats .dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
+
+  /* Legend */
+  .legend { padding: 8px 24px; border-bottom: 1px solid var(--border); display: flex; gap: 20px; font-size: 12px; color: var(--text-muted); align-items: center; flex-wrap: wrap; }
+  .legend-item { display: flex; align-items: center; gap: 6px; }
+  .legend-dot { width: 10px; height: 10px; border-radius: 3px; }
+  .legend-pipe { display: flex; gap: 2px; }
+  .legend-pipe span { width: 6px; height: 6px; border-radius: 50%; }
+
+  /* Board */
+  .board { display: flex; gap: 12px; padding: 16px; min-height: calc(100vh - 100px); align-items: flex-start; }
+
+  /* Columns */
+  .column { min-width: 280px; max-width: 320px; flex-shrink: 0; background: var(--surface); border-radius: var(--radius); border: 1px solid var(--border); display: flex; flex-direction: column; }
+  .column.drop-target { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent); }
+  .column.drop-invalid { border-color: var(--red); box-shadow: 0 0 0 1px var(--red); }
+  .column-header { padding: 12px 16px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
+  .column-title { font-size: 14px; font-weight: 600; }
+  .column-count { font-size: 12px; color: var(--text-muted); background: var(--bg); padding: 2px 8px; border-radius: 10px; }
+  .column-body { padding: 8px; min-height: 80px; flex: 1; display: flex; flex-direction: column; gap: 6px; }
+
+  /* Cards */
+  .card { background: var(--bg); border: 1px solid var(--border); border-radius: 6px; padding: 10px 12px; cursor: grab; transition: all 0.15s ease; position: relative; }
+  .card:hover { border-color: var(--accent); background: var(--surface-hover); }
+  .card.dragging { opacity: 0.4; transform: scale(0.95); }
+  .card.amendment { border-left: 3px solid var(--purple); }
+  .card.redesign { border-left: 3px solid var(--orange); }
+  .card-title { font-size: 13px; font-weight: 500; margin-bottom: 6px; line-height: 1.3; }
+  .card-spec-id { font-size: 11px; color: var(--text-muted); font-family: 'SF Mono', monospace; }
+  .card-agent { font-size: 10px; color: var(--text-muted); margin-top: 4px; }
+  .card-pipeline { display: flex; gap: 3px; margin-top: 8px; align-items: center; }
+  .card-pipeline .step { width: 8px; height: 8px; border-radius: 50%; background: var(--border); transition: background 0.2s; }
+  .card-pipeline .step.done { background: var(--green); }
+  .card-pipeline .step.active { background: var(--yellow); animation: pulse 1.5s infinite; }
+  .card-pipeline .step.failed { background: var(--red); }
+  .card-pipeline .step-label { font-size: 9px; color: var(--text-muted); margin-left: 4px; }
+  .card-status { position: absolute; top: 8px; right: 8px; width: 8px; height: 8px; border-radius: 50%; }
+  .card-meta { display: flex; gap: 8px; margin-top: 6px; font-size: 10px; color: var(--text-muted); }
+  .card-meta .retries { color: var(--yellow); }
+  .card-meta .approval { color: var(--accent); }
+
+  /* Dependency tooltip */
+  .card .deps-tooltip { display: none; position: absolute; bottom: calc(100% + 6px); left: 0; background: var(--surface); border: 1px solid var(--border); border-radius: 6px; padding: 8px 10px; font-size: 11px; white-space: nowrap; z-index: 50; box-shadow: 0 4px 12px rgba(0,0,0,0.4); }
+  .card:hover .deps-tooltip { display: block; }
+  .deps-tooltip .dep-line { color: var(--text-muted); margin: 2px 0; }
+  .deps-tooltip .dep-line.blocks { color: var(--red); }
+
+  /* Foundation column special style */
+  .column.foundation .column-header { background: linear-gradient(135deg, #1a2332, #161b22); }
+
+  /* Status colors */
+  .status-completed { background: var(--green); }
+  .status-pending { background: var(--border); }
+  .status-in_progress { background: var(--yellow); }
+  .status-failed { background: var(--red); }
+  .status-blocked { background: var(--red); opacity: 0.5; }
+  .status-skipped { background: var(--text-muted); opacity: 0.5; }
+
+  /* Drop placeholder */
+  .drop-placeholder { border: 2px dashed var(--accent); border-radius: 6px; min-height: 50px; background: rgba(88, 166, 255, 0.05); display: flex; align-items: center; justify-content: center; font-size: 12px; color: var(--text-muted); }
+
+  /* Drag feedback */
+  .drag-ghost { position: fixed; pointer-events: none; z-index: 1000; opacity: 0.9; transform: rotate(2deg); }
+
+  /* Validation error toast */
+  .toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); background: var(--red); color: white; padding: 10px 20px; border-radius: var(--radius); font-size: 13px; z-index: 200; opacity: 0; transition: opacity 0.3s; pointer-events: none; }
+  .toast.show { opacity: 1; }
+
+  /* Save indicator */
+  .save-indicator { position: fixed; bottom: 24px; right: 24px; background: var(--green); color: var(--bg); padding: 8px 16px; border-radius: var(--radius); font-size: 12px; font-weight: 600; opacity: 0; transition: opacity 0.3s; }
+  .save-indicator.show { opacity: 1; }
+
+  /* Empty state */
+  .empty-state { padding: 24px; text-align: center; color: var(--text-muted); font-size: 13px; }
+
+  /* Phase separator */
+  .phase-label { writing-mode: vertical-rl; text-orientation: mixed; padding: 12px 4px; font-size: 11px; font-weight: 600; color: var(--text-muted); letter-spacing: 1px; text-transform: uppercase; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+
+  /* Modal for dependency warnings */
+  .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 300; display: none; align-items: center; justify-content: center; }
+  .modal-overlay.show { display: flex; }
+  .modal { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 24px; max-width: 440px; width: 90%; }
+  .modal h3 { margin-bottom: 12px; font-size: 16px; }
+  .modal p { font-size: 13px; color: var(--text-muted); line-height: 1.5; margin-bottom: 16px; }
+  .modal .dep-list { font-size: 12px; background: var(--bg); padding: 10px; border-radius: 6px; margin-bottom: 16px; font-family: 'SF Mono', monospace; }
+  .modal-actions { display: flex; gap: 8px; justify-content: flex-end; }
+  .modal-actions button { padding: 8px 16px; border-radius: 6px; border: 1px solid var(--border); cursor: pointer; font-size: 13px; }
+  .btn-cancel { background: var(--surface); color: var(--text); }
+  .btn-confirm { background: var(--accent); color: var(--bg); border-color: var(--accent) !important; font-weight: 600; }
+
+  @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div style="display:flex;gap:4px">
+    <a href="/" style="color:var(--text-muted);text-decoration:none;font-size:13px;padding:4px 10px;border-radius:6px;">Pipeline</a>
+    <a href="#" style="color:var(--accent);text-decoration:none;font-size:13px;padding:4px 10px;border-radius:6px;background:rgba(88,166,255,0.1)">Sprint</a>
+    <a href="#" id="lineageLink" style="color:var(--text-muted);text-decoration:none;font-size:13px;padding:4px 10px;border-radius:6px;">Lineage</a>
+    <a href="#" id="metricsLink" style="color:var(--text-muted);text-decoration:none;font-size:13px;padding:4px 10px;border-radius:6px;">Metrics</a>
+    <a href="#" id="decisionsLink" style="color:var(--text-muted);text-decoration:none;font-size:13px;padding:4px 10px;border-radius:6px;">Decisions</a>
+  </div>
+  <h1>Sprint Board</h1>
+  <select class="app-select" id="appSelect"></select>
+  <div class="header-stats" id="headerStats"></div>
+</div>
+
+<div class="legend">
+  <span style="font-weight:600">Status:</span>
+  <div class="legend-item"><div class="legend-dot" style="background:var(--green)"></div> Completed</div>
+  <div class="legend-item"><div class="legend-dot" style="background:var(--yellow)"></div> In Progress</div>
+  <div class="legend-item"><div class="legend-dot" style="background:var(--border)"></div> Pending</div>
+  <div class="legend-item"><div class="legend-dot" style="background:var(--red)"></div> Failed/Blocked</div>
+  <span style="margin-left:12px; font-weight:600">Pipeline:</span>
+  <div class="legend-item">
+    <div class="legend-pipe">
+      <span style="background:var(--green)"></span>
+      <span style="background:var(--green)"></span>
+      <span style="background:var(--yellow)"></span>
+      <span style="background:var(--border)"></span>
+      <span style="background:var(--border)"></span>
+    </div>
+    SPEC > CODE > COMPILE > TEST > REVIEW
+  </div>
+  <div class="legend-item" style="margin-left:12px"><div class="legend-dot" style="background:transparent; border-left:3px solid var(--purple); width:4px; border-radius:0"></div> Amendment</div>
+  <div class="legend-item"><div class="legend-dot" style="background:transparent; border-left:3px solid var(--orange); width:4px; border-radius:0"></div> Redesign</div>
+</div>
+
+<div class="board" id="board"></div>
+
+<div class="toast" id="toast"></div>
+<div class="save-indicator" id="saveIndicator">Saved</div>
+
+<div class="modal-overlay" id="modalOverlay">
+  <div class="modal">
+    <h3 id="modalTitle">Dependency Warning</h3>
+    <p id="modalMessage"></p>
+    <div class="dep-list" id="modalDeps"></div>
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="closeModal()">Cancel</button>
+      <button class="btn-confirm" id="modalConfirm">Move Anyway</button>
+    </div>
+  </div>
+</div>
+
+<script>
+function escapeHTML(str) {
+  if (str == null) return '';
+  return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+}
+
+// ── State ──
+let globalState = null;
+let currentSlug = null;
+let appData = null;
+let draggedCard = null;
+let dragSourceSprint = null;
+
+// ── Init ──
+async function init() {
+  globalState = await fetchJSON('/api/state');
+  // If URL is /sprint/:slug, use that slug
+  const urlSlug = window.location.pathname.match(/^\/sprint\/([a-z0-9-]+)$/)?.[1];
+  const defaultSlug = urlSlug || globalState.active_app_slug;
+
+  const select = document.getElementById('appSelect');
+  select.innerHTML = '';
+  for (const app of globalState.app_registry) {
+    const opt = document.createElement('option');
+    opt.value = app.slug;
+    opt.textContent = `${app.name} (${app.current_stage})`;
+    if (app.slug === defaultSlug) opt.selected = true;
+    select.appendChild(opt);
+  }
+  select.addEventListener('change', () => {
+    history.replaceState(null, '', `/sprint/${select.value}`);
+    loadApp(select.value);
+  });
+  loadApp(defaultSlug);
+}
+
+async function loadApp(slug) {
+  currentSlug = slug;
+  document.getElementById('lineageLink').href = `/lineage/${slug}`;
+  document.getElementById('metricsLink').href = `/metrics/${slug}`;
+  document.getElementById('decisionsLink').href = `/decisions/${slug}`;
+  appData = await fetchJSON(`/api/app/${slug}`);
+  render();
+}
+
+async function fetchJSON(url) {
+  const res = await fetch(url);
+  return res.json();
+}
+
+// ── Derive board data from app-state.json ──
+function deriveBoard() {
+  const as = appData.appState;
+  if (!as?.pipeline?.wip_build) return { foundation: [], sprints: [], backlog: [], unassigned: [] };
+
+  const wb = as.pipeline.wip_build;
+  const bp = wb.build_progress || [];
+  const sprints = wb.sprints || [];
+
+  // Build a lookup of spec build progress
+  const progressMap = {};
+  for (const p of bp) {
+    progressMap[p.spec_id] = p;
+  }
+
+  // Foundation items (phase 1 actions from action queue, or synthesised)
+  const foundation = [];
+  const foundationSteps = [
+    { id: 'prd', label: 'PRD', status: 'completed' },
+    { id: 'arch', label: 'Architecture', status: 'completed' },
+    { id: 'design', label: 'Design Brief', status: 'completed' },
+    { id: 'config', label: 'Project Config', status: 'completed' },
+    { id: 'ds', label: 'Design System', status: 'completed' },
+    { id: 'tier15', label: 'Tier 1.5 Check', status: 'completed' },
+  ];
+
+  // Check action queue for real statuses
+  if (appData.actionQueue?.queue) {
+    const q = appData.actionQueue.queue;
+    const actionMap = {
+      'generate_prd': 0, 'generate_architecture': 1, 'generate_design': 2,
+      'project_config': 3, 'design_system_setup': 4, 'tier_1_5_checkpoint': 5,
+      'requirements_research': null, 'requirements_review': null,
+    };
+    for (const act of q) {
+      const idx = actionMap[act.action];
+      if (idx !== undefined && idx !== null) {
+        foundationSteps[idx].status = act.status;
+      }
+      // Add requirements if present
+      if (act.action === 'requirements_research') {
+        const existing = foundationSteps.find(f => f.id === 'requirements');
+        if (!existing) foundationSteps.splice(3, 0, { id: 'requirements', label: 'Requirements', status: act.status });
+      }
+      if (act.action === 'requirements_review') {
+        const existing = foundationSteps.find(f => f.id === 'req_review');
+        if (!existing) foundationSteps.splice(4, 0, { id: 'req_review', label: 'Req Review', status: act.status });
+      }
+    }
+  }
+
+  for (const step of foundationSteps) {
+    foundation.push({
+      id: `foundation_${step.id}`,
+      label: step.label,
+      status: step.status,
+      type: 'foundation',
+      draggable: false,
+    });
+  }
+
+  // Sprint columns
+  const sprintColumns = sprints.map(s => {
+    const items = [];
+    // Regular specs
+    for (const specId of s.specs) {
+      const prog = progressMap[specId];
+      items.push(buildSpecCard(specId, prog, s.sprint_number));
+    }
+    // Amendments
+    for (const amendId of (s.amendments || [])) {
+      const prog = progressMap[amendId];
+      items.push(buildSpecCard(amendId, prog, s.sprint_number));
+    }
+    return {
+      sprint_number: s.sprint_number,
+      status: s.status,
+      items,
+      deploy_date: s.deploy_date,
+      retro_date: s.retro_date,
+    };
+  });
+
+  // Backlog: specs that exist as files but aren't in any sprint
+  const allAssigned = new Set();
+  for (const s of sprints) {
+    for (const id of s.specs) allAssigned.add(id);
+    for (const id of (s.amendments || [])) allAssigned.add(id);
+  }
+  const allSpecs = appData.specs || [];
+  const backlog = allSpecs
+    .filter(id => !allAssigned.has(id))
+    .filter(id => !id.includes('-redesign')) // redesigns replace originals
+    .map(id => buildSpecCard(id, progressMap[id], null));
+
+  return { foundation, sprints: sprintColumns, backlog };
+}
+
+function buildSpecCard(specId, progress, sprintNumber) {
+  const isAmendment = specId.includes('-amend-');
+  const isRedesign = specId.includes('-redesign');
+  const pipeline = getPipelineStatus(progress);
+  const overallStatus = getOverallStatus(pipeline, progress);
+
+  return {
+    id: specId,
+    label: formatSpecLabel(specId),
+    specId,
+    sprintNumber,
+    type: isAmendment ? 'amendment' : isRedesign ? 'redesign' : 'spec',
+    pipeline,
+    status: overallStatus,
+    progress,
+    draggable: true,
+    retries: progress ? (progress.compilation_attempts || 0) + (progress.test_execution_attempts || 0) + (progress.review_attempts || 0) - 3 : 0,
+  };
+}
+
+function getPipelineStatus(prog) {
+  if (!prog) return ['pending', 'pending', 'pending', 'pending', 'pending'];
+  const steps = [];
+  // Spec — if code exists, spec is done
+  steps.push(prog.code_completed ? 'done' : 'pending');
+  // Code
+  steps.push(prog.code_completed ? 'done' : 'pending');
+  // Compile
+  if (prog.compilation_passed === true) steps.push('done');
+  else if (prog.compilation_passed === false) steps.push('failed');
+  else if (prog.code_completed && !prog.compilation_completed) steps.push('active');
+  else steps.push('pending');
+  // Test
+  if (prog.test_execution_passed === true) steps.push('done');
+  else if (prog.test_execution_passed === false) steps.push('failed');
+  else if (prog.test_completed && !prog.test_execution_completed) steps.push('active');
+  else if (prog.compilation_passed && !prog.test_completed) steps.push('active');
+  else steps.push('pending');
+  // Review
+  if (prog.review_passed === true) steps.push('done');
+  else if (prog.review_passed === false) steps.push('failed');
+  else if (prog.test_execution_passed && !prog.review_completed) steps.push('active');
+  else steps.push('pending');
+  return steps;
+}
+
+function getOverallStatus(pipeline, progress) {
+  if (!progress) return 'pending';
+  if (pipeline.includes('failed')) return 'failed';
+  if (pipeline.every(s => s === 'done')) return 'completed';
+  if (pipeline.some(s => s === 'active' || s === 'done')) return 'in_progress';
+  return 'pending';
+}
+
+function formatSpecLabel(specId) {
+  return specId
+    .replace(/^\d{3}-/, '')
+    .replace(/-amend-(\d+)$/, ' (Amend $1)')
+    .replace(/-redesign$/, ' (Redesign)')
+    .replace(/-/g, ' ')
+    .replace(/\b\w/g, c => c.toUpperCase());
+}
+
+// ── Render ──
+function render() {
+  const board = document.getElementById('board');
+  const boardData = deriveBoard();
+  board.innerHTML = '';
+
+  // Foundation column
+  const foundCol = createColumn('Foundation', boardData.foundation, 'foundation', false);
+  foundCol.classList.add('foundation');
+  board.appendChild(foundCol);
+
+  if (boardData.sprints.length > 0) {
+    board.appendChild(createPhaseLabel('Phase 2 — Core Loop'));
+  }
+
+  // Sprint columns
+  for (const sprint of boardData.sprints) {
+    const statusLabel = sprint.status === 'retro_complete' ? 'Done' :
+      sprint.status === 'retro_skipped' ? 'Done (no retro)' :
+      sprint.status === 'ready_to_deploy' ? 'Ready to Deploy' :
+      sprint.status === 'deploying' ? 'Deploying' :
+      sprint.status === 'feedback' ? 'Feedback' :
+      sprint.status === 'building' ? 'Building' :
+      sprint.status;
+    const title = `Sprint ${sprint.sprint_number}`;
+    const subtitle = statusLabel;
+    const col = createColumn(title, sprint.items, sprint.sprint_number, true, subtitle);
+    board.appendChild(col);
+  }
+
+  // Backlog
+  if (boardData.backlog.length > 0) {
+    board.appendChild(createPhaseLabel('Backlog'));
+    const backlogCol = createColumn('Unassigned', boardData.backlog, 'backlog', true);
+    board.appendChild(backlogCol);
+  }
+
+  updateHeaderStats(boardData);
+}
+
+function createPhaseLabel(text) {
+  const el = document.createElement('div');
+  el.className = 'phase-label';
+  el.textContent = text;
+  return el;
+}
+
+function createColumn(title, items, sprintId, droppable, subtitle) {
+  const col = document.createElement('div');
+  col.className = 'column';
+  col.dataset.sprint = sprintId;
+
+  const header = document.createElement('div');
+  header.className = 'column-header';
+  header.innerHTML = `
+    <span class="column-title">${escapeHTML(title)}${subtitle ? `<span style="font-weight:400; font-size:12px; color:var(--text-muted); margin-left:8px">${escapeHTML(subtitle)}</span>` : ''}</span>
+    <span class="column-count">${items.length}</span>
+  `;
+  col.appendChild(header);
+
+  const body = document.createElement('div');
+  body.className = 'column-body';
+
+  if (droppable) {
+    body.addEventListener('dragover', handleDragOver);
+    body.addEventListener('dragleave', handleDragLeave);
+    body.addEventListener('drop', handleDrop);
+  }
+
+  if (items.length === 0) {
+    const empty = document.createElement('div');
+    empty.className = 'empty-state';
+    empty.textContent = droppable ? 'Drop specs here' : 'No items';
+    body.appendChild(empty);
+  }
+
+  for (const item of items) {
+    body.appendChild(createCard(item));
+  }
+
+  col.appendChild(body);
+  return col;
+}
+
+function createCard(item) {
+  const card = document.createElement('div');
+  card.className = `card ${item.type === 'amendment' ? 'amendment' : ''} ${item.type === 'redesign' ? 'redesign' : ''}`;
+  card.dataset.specId = item.id;
+  card.dataset.sprint = item.sprintNumber || '';
+
+  if (item.draggable) {
+    card.draggable = true;
+    card.addEventListener('dragstart', handleDragStart);
+    card.addEventListener('dragend', handleDragEnd);
+  }
+
+  let pipelineHTML = '';
+  if (item.type !== 'foundation') {
+    const labels = ['S', 'C', 'B', 'T', 'R'];
+    pipelineHTML = `<div class="card-pipeline">
+      ${item.pipeline.map((s, i) => `<div class="step ${s}" title="${['Spec','Code','Compile','Test','Review'][i]}"></div>`).join('')}
+      <span class="step-label">${labels[item.pipeline.findIndex(s => s === 'active' || s === 'pending')] || 'Done'}</span>
+    </div>`;
+  }
+
+  const statusDot = `<div class="card-status status-${item.status}"></div>`;
+  const specIdDisplay = item.specId ? `<div class="card-spec-id">${escapeHTML(item.specId)}</div>` : '';
+
+  let metaHTML = '';
+  if (item.retries > 0) {
+    metaHTML += `<span class="retries">${item.retries} retries</span>`;
+  }
+  if (item.progress?.tests_total) {
+    metaHTML += `<span>${item.progress.tests_total} tests</span>`;
+  }
+
+  card.innerHTML = `
+    ${statusDot}
+    <div class="card-title">${escapeHTML(item.label)}</div>
+    ${specIdDisplay}
+    ${pipelineHTML}
+    ${metaHTML ? `<div class="card-meta">${metaHTML}</div>` : ''}
+  `;
+
+  return card;
+}
+
+function updateHeaderStats(boardData) {
+  const stats = document.getElementById('headerStats');
+  const allItems = [
+    ...boardData.sprints.flatMap(s => s.items),
+    ...boardData.backlog,
+  ];
+  const completed = allItems.filter(i => i.status === 'completed').length;
+  const inProgress = allItems.filter(i => i.status === 'in_progress').length;
+  const pending = allItems.filter(i => i.status === 'pending').length;
+  const failed = allItems.filter(i => i.status === 'failed').length;
+  const total = allItems.length;
+
+  const wb = appData.appState?.pipeline?.wip_build;
+  const phase = wb ? `Phase ${wb.phase}` : '';
+  const sprint = wb ? `Sprint ${wb.current_sprint}` : '';
+
+  stats.innerHTML = `
+    <div class="stat">${phase} ${sprint}</div>
+    <div class="stat"><span class="dot" style="background:var(--green)"></span> ${completed}/${total} done</div>
+    ${inProgress > 0 ? `<div class="stat"><span class="dot" style="background:var(--yellow)"></span> ${inProgress} active</div>` : ''}
+    ${failed > 0 ? `<div class="stat"><span class="dot" style="background:var(--red)"></span> ${failed} failed</div>` : ''}
+    ${pending > 0 ? `<div class="stat"><span class="dot" style="background:var(--border)"></span> ${pending} pending</div>` : ''}
+  `;
+}
+
+// ── Drag & Drop ──
+function handleDragStart(e) {
+  draggedCard = e.target.closest('.card');
+  dragSourceSprint = draggedCard.dataset.sprint;
+  draggedCard.classList.add('dragging');
+  e.dataTransfer.effectAllowed = 'move';
+  e.dataTransfer.setData('text/plain', draggedCard.dataset.specId);
+}
+
+function handleDragEnd(e) {
+  if (draggedCard) draggedCard.classList.remove('dragging');
+  draggedCard = null;
+  dragSourceSprint = null;
+  document.querySelectorAll('.column').forEach(c => {
+    c.classList.remove('drop-target', 'drop-invalid');
+  });
+}
+
+function handleDragOver(e) {
+  e.preventDefault();
+  const col = e.target.closest('.column');
+  if (!col) return;
+
+  const targetSprint = col.dataset.sprint;
+  if (targetSprint === dragSourceSprint) return;
+
+  const specId = draggedCard?.dataset.specId;
+  if (!specId) return;
+
+  const validation = validateMove(specId, dragSourceSprint, targetSprint);
+  if (validation.allowed) {
+    col.classList.add('drop-target');
+    col.classList.remove('drop-invalid');
+  } else {
+    col.classList.add('drop-invalid');
+    col.classList.remove('drop-target');
+  }
+}
+
+function handleDragLeave(e) {
+  const col = e.target.closest('.column');
+  if (col) col.classList.remove('drop-target', 'drop-invalid');
+}
+
+function handleDrop(e) {
+  e.preventDefault();
+  const col = e.target.closest('.column');
+  if (!col) return;
+  col.classList.remove('drop-target', 'drop-invalid');
+
+  const targetSprint = col.dataset.sprint;
+  const specId = e.dataTransfer.getData('text/plain');
+  if (!specId || targetSprint === dragSourceSprint) return;
+
+  const validation = validateMove(specId, dragSourceSprint, targetSprint);
+
+  if (validation.allowed) {
+    executeMove(specId, dragSourceSprint, targetSprint);
+  } else if (validation.warnings.length > 0) {
+    showMoveWarning(specId, targetSprint, validation);
+  } else {
+    showToast(validation.reason || 'Cannot move this item here');
+  }
+}
+
+// ── Dependency Validation ──
+function validateMove(specId, fromSprint, toSprint) {
+  const wb = appData.appState.pipeline.wip_build;
+  const sprints = wb.sprints;
+  const bp = wb.build_progress || [];
+
+  // Can't move completed specs that have downstream dependents
+  const progress = bp.find(p => p.spec_id === specId);
+  if (progress?.review_passed) {
+    return { allowed: false, reason: 'This spec is already completed and reviewed', warnings: [] };
+  }
+
+  const toNum = toSprint === 'backlog' ? Infinity : parseInt(toSprint);
+
+  // Check if amendment — must stay in same or later sprint than parent
+  if (specId.includes('-amend-')) {
+    const parentId = specId.replace(/-amend-\d+$/, '');
+    const parentSprint = findSpecSprint(parentId, sprints);
+    if (parentSprint !== null && toNum < parentSprint) {
+      return { allowed: false, reason: `Amendment must be in Sprint ${parentSprint} or later (parent spec is there)`, warnings: [] };
+    }
+  }
+
+  // Check if any specs in earlier sprints depend on this one being done first
+  // (e.g., redesign depends on original)
+  const warnings = [];
+  if (specId.includes('-redesign')) {
+    const originalId = specId.replace(/-redesign$/, '');
+    const originalSprint = findSpecSprint(originalId, sprints);
+    if (originalSprint !== null && toNum <= originalSprint) {
+      warnings.push(`Original spec "${originalId}" is in Sprint ${originalSprint}`);
+    }
+  }
+
+  // Warn if moving to an already-completed sprint
+  if (toSprint !== 'backlog') {
+    const targetSprintData = sprints.find(s => s.sprint_number === toNum);
+    if (targetSprintData && (targetSprintData.status === 'retro_complete' || targetSprintData.status === 'retro_skipped')) {
+      warnings.push(`Sprint ${toNum} is already completed — this will reopen it`);
+    }
+  }
+
+  return { allowed: warnings.length === 0 || true, warnings, reason: null };
+}
+
+function findSpecSprint(specId, sprints) {
+  for (const s of sprints) {
+    if (s.specs.includes(specId) || (s.amendments || []).includes(specId)) return s.sprint_number;
+  }
+  return null;
+}
+
+function showMoveWarning(specId, targetSprint, validation) {
+  const overlay = document.getElementById('modalOverlay');
+  document.getElementById('modalTitle').textContent = 'Move Warning';
+  document.getElementById('modalMessage').textContent = `Moving "${formatSpecLabel(specId)}" to ${targetSprint === 'backlog' ? 'Backlog' : 'Sprint ' + targetSprint}:`;
+  document.getElementById('modalDeps').innerHTML = validation.warnings.map(w => `<div class="dep-line blocks">${escapeHTML(w)}</div>`).join('');
+  document.getElementById('modalConfirm').onclick = () => {
+    closeModal();
+    executeMove(specId, dragSourceSprint, targetSprint);
+  };
+  overlay.classList.add('show');
+}
+
+function closeModal() {
+  document.getElementById('modalOverlay').classList.remove('show');
+}
+
+// ── Execute Move ──
+async function executeMove(specId, fromSprint, toSprint) {
+  const wb = appData.appState.pipeline.wip_build;
+  const sprints = wb.sprints;
+  const isAmendment = specId.includes('-amend-') || specId.includes('-redesign');
+
+  // Remove from source sprint
+  if (fromSprint && fromSprint !== 'backlog') {
+    const srcNum = parseInt(fromSprint);
+    const srcSprint = sprints.find(s => s.sprint_number === srcNum);
+    if (srcSprint) {
+      if (isAmendment) {
+        srcSprint.amendments = (srcSprint.amendments || []).filter(id => id !== specId);
+      } else {
+        srcSprint.specs = srcSprint.specs.filter(id => id !== specId);
+      }
+    }
+  }
+
+  // Add to target sprint
+  if (toSprint !== 'backlog') {
+    const tgtNum = parseInt(toSprint);
+    let tgtSprint = sprints.find(s => s.sprint_number === tgtNum);
+
+    // Create sprint if it doesn't exist
+    if (!tgtSprint) {
+      tgtSprint = {
+        sprint_number: tgtNum,
+        specs: [],
+        amendments: [],
+        status: 'planning',
+        planned_date: new Date().toISOString(),
+        build_start_date: null,
+        deploy_date: null,
+        retro_date: null,
+        retro_output: null,
+        owner_override_skip_retro: false,
+      };
+      sprints.push(tgtSprint);
+      sprints.sort((a, b) => a.sprint_number - b.sprint_number);
+    }
+
+    if (isAmendment) {
+      if (!tgtSprint.amendments) tgtSprint.amendments = [];
+      tgtSprint.amendments.push(specId);
+    } else {
+      tgtSprint.specs.push(specId);
+    }
+  }
+
+  // Save
+  await saveAppState();
+  render();
+}
+
+async function saveAppState() {
+  try {
+    const res = await fetch(`/api/app/${currentSlug}/app-state`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(appData.appState),
+    });
+    if (res.ok) {
+      const indicator = document.getElementById('saveIndicator');
+      indicator.classList.add('show');
+      setTimeout(() => indicator.classList.remove('show'), 1500);
+    }
+  } catch (e) {
+    showToast('Failed to save: ' + e.message);
+  }
+}
+
+function showToast(msg) {
+  const toast = document.getElementById('toast');
+  toast.textContent = msg;
+  toast.classList.add('show');
+  setTimeout(() => toast.classList.remove('show'), 3000);
+}
+
+// ── Keyboard shortcut ──
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') closeModal();
+});
+
+// ── Start ──
+init();
+</script>
+</body>
+</html>

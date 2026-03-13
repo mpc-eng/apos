@@ -1,0 +1,105 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "ARCH-REVIEW Output",
+  "description": "Validates the output payload produced by the ARCH-REVIEW hard-gate agent in the APOS pipeline.",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "agent",
+    "timestamp",
+    "review_passed",
+    "checklist_results",
+    "self_check"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "type": "string",
+      "const": "3.4.0",
+      "description": "Semantic version of the ARCH-REVIEW output schema."
+    },
+    "agent": {
+      "type": "string",
+      "const": "ARCH-REVIEW",
+      "description": "Identifier of the gate agent that produced this output."
+    },
+    "timestamp": {
+      "type": "string",
+      "format": "date-time",
+      "description": "ISO-8601 date-time when the review was completed."
+    },
+    "review_passed": {
+      "type": "boolean",
+      "description": "Overall pass/fail verdict of the architecture review gate."
+    },
+    "checklist_results": {
+      "type": "array",
+      "description": "Ordered list of checklist items evaluated during the review.",
+      "items": {
+        "type": "object",
+        "required": [
+          "category",
+          "passed",
+          "details",
+          "blocking"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "category": {
+            "type": "string",
+            "enum": [
+              "mcp_server",
+              "prompt_caching",
+              "batch_api",
+              "model_pinning",
+              "schema_validation",
+              "session_hook",
+              "cost_management",
+              "schema_version_match"
+            ],
+            "description": "Architecture-review category this checklist item covers."
+          },
+          "passed": {
+            "type": "boolean",
+            "description": "Whether this individual checklist item passed."
+          },
+          "details": {
+            "type": "string",
+            "description": "Human-readable explanation of the evaluation outcome."
+          },
+          "blocking": {
+            "type": "boolean",
+            "default": true,
+            "description": "When true, a failure in this item blocks the gate from passing."
+          }
+        }
+      }
+    },
+    "self_check": {
+      "type": "object",
+      "description": "Self-referential integrity check emitted by the agent.",
+      "required": [
+        "agent_badge",
+        "output_schema_valid",
+        "gate_type"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "agent_badge": {
+          "type": "string",
+          "const": "[ARCH-REVIEW]",
+          "description": "Display badge used to tag log lines from this agent."
+        },
+        "output_schema_valid": {
+          "type": "boolean",
+          "description": "Whether the agent's own output passed schema self-validation."
+        },
+        "gate_type": {
+          "type": "string",
+          "const": "hard_gate",
+          "description": "Classification of this gate (hard_gate means pipeline halts on failure)."
+        }
+      }
+    }
+  }
+}

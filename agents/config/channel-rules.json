@@ -1,0 +1,234 @@
+{
+  "schema_version": "3.3.0",
+  "subreddits": {
+    "r/SomebodyMakeThis": {
+      "min_account_age_days": 30,
+      "min_karma": 100,
+      "human_review_queue": false,
+      "audience_type": "builder",
+      "verticals": []
+    },
+    "r/Entrepreneur": {
+      "min_account_age_days": 90,
+      "min_karma": 500,
+      "human_review_queue": true,
+      "audience_type": "builder",
+      "verticals": []
+    },
+    "r/AppIdeas": {
+      "min_account_age_days": 7,
+      "min_karma": 10,
+      "human_review_queue": false,
+      "audience_type": "builder",
+      "verticals": []
+    },
+    "r/SideProject": {
+      "min_account_age_days": 30,
+      "min_karma": 50,
+      "human_review_queue": false,
+      "audience_type": "builder",
+      "verticals": []
+    },
+    "r/startups": {
+      "min_account_age_days": 60,
+      "min_karma": 200,
+      "human_review_queue": true,
+      "audience_type": "builder",
+      "verticals": []
+    },
+    "r/UKPersonalFinance": {
+      "min_account_age_days": 90,
+      "min_karma": 100,
+      "human_review_queue": true,
+      "audience_type": "user",
+      "verticals": ["finance"]
+    },
+    "r/FIREUK": {
+      "min_account_age_days": 30,
+      "min_karma": 50,
+      "human_review_queue": false,
+      "audience_type": "user",
+      "verticals": ["finance"]
+    },
+    "r/UKInvesting": {
+      "min_account_age_days": 30,
+      "min_karma": 50,
+      "human_review_queue": false,
+      "audience_type": "user",
+      "verticals": ["finance"]
+    },
+    "r/ADHD": {
+      "min_account_age_days": 7,
+      "min_karma": 10,
+      "human_review_queue": false,
+      "audience_type": "user",
+      "verticals": ["health_fitness", "productivity"]
+    },
+    "r/loseit": {
+      "min_account_age_days": 7,
+      "min_karma": 10,
+      "human_review_queue": false,
+      "audience_type": "user",
+      "verticals": ["health_fitness"]
+    },
+    "r/Mounjaro": {
+      "min_account_age_days": 7,
+      "min_karma": 10,
+      "human_review_queue": false,
+      "audience_type": "user",
+      "verticals": ["health_fitness"]
+    },
+    "r/productivity": {
+      "min_account_age_days": 7,
+      "min_karma": 10,
+      "human_review_queue": false,
+      "audience_type": "user",
+      "verticals": ["productivity"]
+    },
+    "r/getdisciplined": {
+      "min_account_age_days": 7,
+      "min_karma": 10,
+      "human_review_queue": false,
+      "audience_type": "user",
+      "verticals": ["productivity"]
+    },
+    "r/nosurf": {
+      "min_account_age_days": 7,
+      "min_karma": 10,
+      "human_review_queue": false,
+      "audience_type": "user",
+      "verticals": ["utilities"]
+    },
+    "r/iPhone": {
+      "min_account_age_days": 30,
+      "min_karma": 50,
+      "human_review_queue": false,
+      "audience_type": "user",
+      "verticals": ["utilities"]
+    }
+  },
+  "non_reddit_channels": {
+    "product_hunt": {
+      "type": "launch_platform",
+      "best_for": ["polished_mvp", "developer_tools"],
+      "requirements": "Product must be demo-ready or live. Requires a Product Hunt maker account.",
+      "post_format": "tagline_plus_description",
+      "validation_stage": "tier_2_or_later"
+    },
+    "indie_hackers": {
+      "type": "community",
+      "best_for": ["solo_dev_products", "saas", "mobile_apps"],
+      "requirements": "Account required. Builder-audience but appreciates authentic stories with real metrics.",
+      "post_format": "story_format_with_metrics",
+      "validation_stage": "tier_1"
+    },
+    "hacker_news": {
+      "type": "community",
+      "best_for": ["technical_innovation", "open_source"],
+      "requirements": "Account required. Technical audience. Pure consumer apps are a poor fit unless technically novel.",
+      "post_format": "show_hn_format",
+      "validation_stage": "tier_1"
+    },
+    "twitter_x": {
+      "type": "social_media",
+      "best_for": ["any_category"],
+      "requirements": "Account with followers. Thread format works best for validation. Low barrier but reach depends on account size.",
+      "post_format": "thread_format",
+      "validation_stage": "tier_1"
+    },
+    "facebook_groups": {
+      "type": "community",
+      "best_for": ["consumer_apps", "niche_verticals", "uk_specific"],
+      "requirements": "Must be a member of the relevant group. Group-specific rules vary widely. Many UK finance groups have 100k+ members.",
+      "post_format": "discussion_question",
+      "validation_stage": "tier_1"
+    },
+    "discord_servers": {
+      "type": "community",
+      "best_for": ["gaming", "niche_tech", "hobbyist"],
+      "requirements": "Server-specific rules. Often strict self-promo policies. Better for Tier 2+ when you have a product to demo.",
+      "post_format": "channel_appropriate",
+      "validation_stage": "tier_2_or_later"
+    },
+    "instagram": {
+      "type": "social_media",
+      "best_for": ["health_fitness", "social_messaging", "entertainment", "food_drink"],
+      "requirements": "Account required. Reels format preferred. Instagram does not penalise high posting frequency (unlike TikTok). Best when a proven competitor content format exists to adapt.",
+      "post_format": "reels_format",
+      "validation_stage": "tier_1",
+      "notes": "Highest leverage for visual/fitness/social categories. Requires a repeatable content format — not one-off posts. CDO should identify 1-2 competitor formats with proven engagement before committing to Instagram as a channel."
+    }
+  },
+  "vertical_to_channels": {
+    "finance": {
+      "primary_subreddits": ["r/UKPersonalFinance", "r/FIREUK"],
+      "secondary_subreddits": ["r/UKInvesting"],
+      "non_reddit": ["indie_hackers"],
+      "facebook_groups": ["UK Personal Finance Community", "FIRE UK"],
+      "notes": "Finance users distrust new apps. Lead with privacy and read-only access. Avoid promotional tone completely. Moneyhub/Money Dashboard shutdown context resonates strongly."
+    },
+    "health_fitness": {
+      "primary_subreddits": ["r/loseit", "r/ADHD", "r/Mounjaro"],
+      "secondary_subreddits": ["r/productivity"],
+      "non_reddit": ["indie_hackers", "twitter_x", "instagram"],
+      "facebook_groups": [],
+      "notes": "Health communities are protective. Frame as personal experience, not product pitch. ADHD community overlaps with productivity. Instagram Reels are highest-leverage organic channel for fitness — identify a proven competitor content format to adapt."
+    },
+    "productivity": {
+      "primary_subreddits": ["r/productivity", "r/ADHD"],
+      "secondary_subreddits": ["r/getdisciplined"],
+      "non_reddit": ["product_hunt", "indie_hackers", "hacker_news"],
+      "facebook_groups": [],
+      "notes": "Productivity users are app-savvy and sceptical of yet another app. Lead with specific workflow improvement, not general productivity claims."
+    },
+    "utilities": {
+      "primary_subreddits": ["r/nosurf", "r/iPhone"],
+      "secondary_subreddits": [],
+      "non_reddit": ["product_hunt"],
+      "facebook_groups": [],
+      "notes": "Utility apps need a clear, concrete use case. Abstract value propositions fail here."
+    },
+    "education": {
+      "primary_subreddits": [],
+      "secondary_subreddits": [],
+      "non_reddit": ["indie_hackers", "twitter_x"],
+      "facebook_groups": [],
+      "notes": "Education verticals are fragmented. Teacher communities vs student communities vs parent communities. Identify the specific audience before selecting channels."
+    },
+    "social_messaging": {
+      "primary_subreddits": [],
+      "secondary_subreddits": [],
+      "non_reddit": ["twitter_x", "product_hunt", "instagram"],
+      "facebook_groups": [],
+      "notes": "Social apps need network effects. Validation must test whether people will invite others, not just whether they'd download. Instagram Reels effective for social apps with visual/competitive elements."
+    },
+    "entertainment": {
+      "primary_subreddits": [],
+      "secondary_subreddits": [],
+      "non_reddit": ["twitter_x", "product_hunt", "instagram"],
+      "facebook_groups": [],
+      "notes": "Entertainment is broad. Identify the specific niche community and validate there. Instagram Reels effective for visually engaging entertainment concepts."
+    },
+    "food_drink": {
+      "primary_subreddits": [],
+      "secondary_subreddits": [],
+      "non_reddit": ["indie_hackers", "twitter_x"],
+      "facebook_groups": [],
+      "notes": "Food and drink apps often have strong local/regional angles. UK-specific communities are valuable."
+    },
+    "travel": {
+      "primary_subreddits": [],
+      "secondary_subreddits": [],
+      "non_reddit": ["indie_hackers", "twitter_x"],
+      "facebook_groups": [],
+      "notes": "Travel apps compete with well-funded incumbents. Validate the specific niche gap, not the broad category."
+    },
+    "news_media": {
+      "primary_subreddits": [],
+      "secondary_subreddits": [],
+      "non_reddit": ["twitter_x", "hacker_news"],
+      "facebook_groups": [],
+      "notes": "News/media apps face commoditisation. Validate unique curation or format angle, not just content delivery."
+    }
+  }
+}

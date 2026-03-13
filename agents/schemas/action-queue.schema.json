@@ -1,0 +1,196 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Action Queue",
+  "description": "Per-app action queue for Mission Control orchestration layer.",
+  "type": "object",
+  "required": ["schema_version", "app_slug", "queue"],
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": { "type": "string", "const": "3.4.0" },
+    "app_slug": { "type": "string", "minLength": 1 },
+    "queue": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "action", "agent", "status", "depends_on", "created_at"],
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^act_[0-9]{3}$",
+            "description": "Sequential action ID within this queue"
+          },
+          "action": {
+            "type": "string",
+            "enum": [
+              "generate_prd",
+              "generate_architecture",
+              "generate_design",
+              "requirements_research",
+              "requirements_review",
+              "project_config",
+              "design_system_setup",
+              "tier_1_5_checkpoint",
+              "sprint_planning",
+              "generate_spec",
+              "generate_code",
+              "compile_check",
+              "generate_tests",
+              "test_execution",
+              "review",
+              "sprint_deploy",
+              "sprint_retro",
+              "ux_checkpoint",
+              "pmf_gate",
+              "generate_aso",
+              "generate_spec_amendment",
+              "generate_code_amendment",
+              "compile_check_amendment",
+              "generate_tests_amendment",
+              "test_execution_amendment",
+              "review_amendment"
+            ]
+          },
+          "agent": {
+            "type": "string",
+            "enum": [
+              "PRD", "ARCHITECTURE", "DESIGN", "REQUIREMENTS", "ORCHESTRATOR",
+              "SPEC", "CODE", "TEST", "REVIEW",
+              "SPRINT-RETRO", "PMF-GATE", "ASO"
+            ]
+          },
+          "status": {
+            "type": "string",
+            "enum": ["pending", "in_progress", "completed", "failed", "blocked", "skipped"]
+          },
+          "depends_on": {
+            "type": "array",
+            "items": { "type": "string", "pattern": "^act_[0-9]{3}$" },
+            "description": "DEPRECATED in 3.4.0. Flat dependency list retained for migration compatibility. Use 'dependencies' with typed edges instead."
+          },
+          "dependencies": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": ["action_id", "type"],
+              "additionalProperties": false,
+              "properties": {
+                "action_id": {
+                  "type": "string",
+                  "pattern": "^act_[0-9]{3}$"
+                },
+                "type": {
+                  "type": "string",
+                  "enum": ["blocks", "supersedes", "relates_to"],
+                  "description": "'blocks' = hard prerequisite. 'supersedes' = amendment replaces part of upstream. 'relates_to' = informational link, no execution constraint."
+                }
+              }
+            },
+            "description": "Typed dependency edges replacing flat depends_on. New in 3.4.0."
+          },
+          "parallel_group": {
+            "type": ["string", "null"],
+            "default": null,
+            "description": "Actions sharing a parallel_group ID are independent and can execute concurrently. Null = sequential (default)."
+          },
+          "resubmit_of": {
+            "type": ["string", "null"],
+            "pattern": "^act_[0-9]{3}$",
+            "default": null,
+            "description": "If this action is a resubmission of a rejected/failed action, references the original action ID. Null if not a resubmission."
+          },
+          "spec_id": {
+            "type": ["string", "null"],
+            "description": "The spec this action relates to, if applicable"
+          },
+          "sprint_number": {
+            "type": ["integer", "null"],
+            "minimum": 1
+          },
+          "phase": {
+            "type": ["integer", "null"],
+            "minimum": 1,
+            "maximum": 4
+          },
+          "created_at": { "type": "string", "format": "date-time" },
+          "started_at": { "type": ["string", "null"], "format": "date-time" },
+          "completed_at": { "type": ["string", "null"], "format": "date-time" },
+          "retry_count": { "type": "integer", "minimum": 0, "default": 0 },
+          "max_retries": { "type": "integer", "minimum": 0, "default": 3 },
+          "error": {
+            "type": ["object", "null"],
+            "properties": {
+              "category": {
+                "type": "string",
+                "enum": [
+                  "swift6_concurrency",
+                  "missing_import",
+                  "type_mismatch",
+                  "architecture_violation",
+                  "design_system_missing",
+                  "test_assertion",
+                  "test_setup",
+                  "review_failed",
+                  "prerequisite_missing",
+                  "timeout",
+                  "unknown"
+                ]
+              },
+              "message": { "type": "string" },
+              "file": { "type": ["string", "null"] },
+              "line": { "type": ["integer", "null"] }
+            },
+            "required": ["category", "message"]
+          },
+          "output_path": {
+            "type": ["string", "null"],
+            "description": "Path to the output file produced by this action"
+          },
+          "context_bundle_kb": {
+            "type": ["number", "null"],
+            "description": "Size of context bundle sent to subagent, in KB"
+          },
+          "owner_approval_required": {
+            "type": "boolean",
+            "default": false,
+            "description": "True if this action needs owner sign-off before proceeding"
+          },
+          "override": {
+            "type": ["object", "null"],
+            "properties": {
+              "type": { "type": "string" },
+              "reason": { "type": "string" },
+              "date": { "type": "string", "format": "date-time" }
+            },
+            "required": ["type", "reason", "date"]
+          }
+        }
+      }
+    },
+    "summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "Computed queue summary, written by the orchestrator on each queue update. Read by Mission Control.",
+      "properties": {
+        "total": { "type": "integer", "minimum": 0 },
+        "completed": { "type": "integer", "minimum": 0 },
+        "in_progress": { "type": "integer", "minimum": 0 },
+        "ready": { "type": "integer", "minimum": 0, "description": "Pending actions with all 'blocks' deps completed and none failed" },
+        "blocked": { "type": "integer", "minimum": 0, "description": "Pending actions with at least one failed/blocked upstream via 'blocks' edges" },
+        "failed": { "type": "integer", "minimum": 0 },
+        "skipped": { "type": "integer", "minimum": 0 },
+        "critical_blocker": {
+          "type": ["string", "null"],
+          "pattern": "^act_[0-9]{3}$",
+          "description": "Action ID of the failed action blocking the most transitive downstream actions. Null if nothing failed."
+        },
+        "critical_blocker_downstream_count": {
+          "type": ["integer", "null"],
+          "minimum": 0,
+          "description": "Number of actions transitively blocked by the critical blocker."
+        }
+      },
+      "required": ["total", "completed", "in_progress", "ready", "blocked", "failed", "skipped"]
+    }
+  }
+}

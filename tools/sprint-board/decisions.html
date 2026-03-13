@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>APOS Decisions & Audit</title>
+<style>
+  :root {
+    --bg: #0d1117;
+    --surface: #161b22;
+    --surface-hover: #1c2333;
+    --border: #30363d;
+    --text: #e6edf3;
+    --text-muted: #8b949e;
+    --accent: #58a6ff;
+    --green: #3fb950;
+    --yellow: #d29922;
+    --red: #f85149;
+    --orange: #db6d28;
+    --purple: #bc8cff;
+    --pink: #f778ba;
+    --radius: 8px;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'SF Pro', system-ui, sans-serif; background: var(--bg); color: var(--text); }
+
+  .header { padding: 16px 24px; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 16px; }
+  .header h1 { font-size: 18px; font-weight: 600; }
+  .header-stats { display: flex; gap: 16px; margin-left: auto; font-size: 13px; color: var(--text-muted); }
+  .stat { display: flex; align-items: center; gap: 5px; }
+  .stat .dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
+  .nav-tabs { display: flex; gap: 2px; }
+  .nav-tab { padding: 6px 14px; border-radius: 6px; font-size: 13px; text-decoration: none; color: var(--text-muted); transition: all 0.15s; }
+  .nav-tab:hover { color: var(--text); background: var(--surface-hover); }
+  .nav-tab.active { color: var(--accent); background: rgba(88,166,255,0.1); }
+  .app-select { background: var(--surface); color: var(--text); border: 1px solid var(--border); border-radius: 6px; padding: 4px 8px; font-size: 13px; cursor: pointer; }
+
+  .content { padding: 24px; display: flex; flex-direction: column; gap: 24px; }
+
+  /* Section containers */
+  .section { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); }
+  .section-header { padding: 12px 16px; border-bottom: 1px solid var(--border); font-size: 14px; font-weight: 600; display: flex; align-items: center; gap: 8px; }
+  .section-body { padding: 16px; }
+  .section-count { font-size: 12px; color: var(--text-muted); background: var(--bg); padding: 2px 8px; border-radius: 10px; }
+
+  /* Override & decision cards */
+  .decision-card { padding: 12px; border: 1px solid var(--border); border-radius: 6px; margin-bottom: 8px; border-left: 3px solid var(--text-muted); }
+  .decision-card:last-child { margin-bottom: 0; }
+  .decision-card.override { border-left-color: var(--orange); }
+  .decision-card.approved { border-left-color: var(--green); }
+  .decision-card.rejected { border-left-color: var(--red); }
+  .decision-meta { display: flex; gap: 8px; align-items: center; margin-bottom: 6px; font-size: 12px; }
+  .badge { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; text-transform: uppercase; }
+  .badge-override { background: rgba(219,109,40,0.2); color: var(--orange); }
+  .badge-approved { background: rgba(63,185,80,0.2); color: var(--green); }
+  .badge-rejected { background: rgba(248,81,73,0.2); color: var(--red); }
+  .badge-resubmit { background: rgba(188,140,255,0.2); color: var(--purple); }
+  .decision-detail { font-size: 13px; color: var(--text-muted); line-height: 1.5; }
+  .decision-timestamp { color: var(--text-muted); font-size: 11px; }
+
+  /* Gate results table */
+  .gate-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  .gate-table th { text-align: left; padding: 8px 12px; color: var(--text-muted); border-bottom: 1px solid var(--border); font-weight: 500; font-size: 12px; }
+  .gate-table td { padding: 8px 12px; border-bottom: 1px solid var(--border); vertical-align: top; }
+  .gate-table tr:last-child td { border-bottom: none; }
+  .gate-table tr:hover { background: var(--surface-hover); }
+  .badge-pass { background: rgba(63,185,80,0.2); color: var(--green); padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; }
+  .badge-retry { background: rgba(210,153,34,0.2); color: var(--yellow); padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; }
+  .badge-fail { background: rgba(248,81,73,0.2); color: var(--red); padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; }
+  .badge-amend { background: rgba(188,140,255,0.15); color: var(--purple); padding: 1px 6px; border-radius: 3px; font-size: 10px; margin-left: 6px; }
+  .gate-notes { font-size: 12px; color: var(--text-muted); line-height: 1.4; max-width: 400px; cursor: pointer; }
+  .gate-notes.truncated { max-height: 38px; overflow: hidden; text-overflow: ellipsis; }
+  .gate-notes.expanded { max-height: none; }
+  .stage-dots { display: flex; gap: 4px; align-items: center; }
+  .stage-dot { width: 8px; height: 8px; border-radius: 50%; }
+  .stage-dot.pass { background: var(--green); }
+  .stage-dot.retry { background: var(--yellow); }
+  .stage-label { font-size: 10px; color: var(--text-muted); margin-left: 2px; }
+
+  /* Session timeline */
+  .timeline { position: relative; padding-left: 24px; }
+  .timeline::before { content: ''; position: absolute; left: 7px; top: 0; bottom: 0; width: 2px; background: var(--border); }
+  .session-block { margin-bottom: 20px; position: relative; }
+  .session-block:last-child { margin-bottom: 0; }
+  .session-header { font-size: 13px; font-weight: 600; margin-bottom: 8px; display: flex; align-items: center; gap: 8px; cursor: pointer; }
+  .session-header::before { content: ''; position: absolute; left: -20px; width: 12px; height: 12px; border-radius: 50%; background: var(--accent); border: 2px solid var(--bg); }
+  .session-duration { font-size: 11px; color: var(--text-muted); font-weight: 400; }
+  .session-events { display: flex; flex-direction: column; gap: 2px; }
+  .session-events.collapsed { display: none; }
+  .event-row { display: flex; align-items: center; gap: 8px; padding: 3px 0; font-size: 12px; }
+  .event-dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
+  .event-dot.completed { background: var(--green); }
+  .event-dot.failed { background: var(--red); }
+  .event-dot.retry { background: var(--yellow); }
+  .event-dot.created { background: var(--text-muted); }
+  .event-dot.started { background: var(--accent); }
+  .event-dot.blocked { background: var(--red); }
+  .event-dot.skipped { background: var(--text-muted); opacity: 0.5; }
+  .event-id { color: var(--text-muted); min-width: 56px; }
+  .event-type { min-width: 80px; }
+  .event-agent { color: var(--accent); min-width: 90px; }
+  .event-detail { color: var(--text-muted); flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .event-time { color: var(--text-muted); font-size: 11px; }
+
+  /* Agent flow diagram */
+  .flow-diagram { display: flex; flex-direction: column; gap: 24px; padding: 8px; }
+  .flow-phase { display: flex; flex-direction: column; gap: 4px; }
+  .flow-phase-label { font-size: 11px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px; }
+  .flow-row { display: flex; align-items: center; gap: 0; flex-wrap: wrap; }
+  .flow-node { display: inline-flex; align-items: center; justify-content: center; padding: 6px 14px; border-radius: 6px; font-size: 12px; font-weight: 600; border: 1px solid var(--border); background: var(--bg); min-width: 70px; text-align: center; position: relative; }
+  .flow-node.completed { border-color: var(--green); color: var(--green); background: rgba(63,185,80,0.08); }
+  .flow-node.in_progress { border-color: var(--accent); color: var(--accent); background: rgba(88,166,255,0.08); animation: pulse 2s infinite; }
+  .flow-node.pending { border-color: var(--border); color: var(--text-muted); }
+  .flow-node.failed { border-color: var(--red); color: var(--red); background: rgba(248,81,73,0.08); }
+  .flow-arrow { color: var(--text-muted); font-size: 14px; padding: 0 6px; }
+  .flow-fork { display: flex; flex-direction: column; gap: 4px; align-items: flex-start; padding-left: 0; }
+  .flow-fork-row { display: flex; align-items: center; gap: 0; }
+  @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.6; } }
+
+  .no-data { color: var(--text-muted); font-size: 13px; font-style: italic; padding: 12px 0; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>APOS Decisions</h1>
+  <nav class="nav-tabs" id="nav"></nav>
+  <select class="app-select" id="appSelect"></select>
+  <div class="header-stats" id="headerStats"></div>
+</div>
+
+<div class="content" id="content"></div>
+
+<script>
+function escapeHTML(str) {
+  if (str == null) return '';
+  return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+}
+
+let globalState = null;
+let decisionsData = null;
+let currentSlug = null;
+
+async function fetchJSON(url) { return (await fetch(url)).json(); }
+
+function specLabel(id) {
+  return id.replace(/^\d{3}-/, '').replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+}
+
+function fmtDate(iso) {
+  if (!iso) return '—';
+  const d = new Date(iso);
+  return d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }) + ' ' + d.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+}
+
+function fmtTime(iso) {
+  if (!iso) return '';
+  return new Date(iso).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+}
+
+async function init() {
+  globalState = await fetchJSON('/api/state');
+  currentSlug = window.location.pathname.split('/').pop() || globalState.active_app_slug;
+  buildNav();
+  buildAppSelect();
+  await loadApp(currentSlug);
+}
+
+function buildNav() {
+  const slug = currentSlug || globalState.active_app_slug;
+  document.getElementById('nav').innerHTML = [
+    { label: 'Pipeline', href: '/' },
+    { label: 'Sprint', href: `/sprint/${slug}` },
+    { label: 'Lineage', href: `/lineage/${slug}` },
+    { label: 'Metrics', href: `/metrics/${slug}` },
+    { label: 'Decisions', href: `/decisions/${slug}`, active: true },
+  ].map(t => `<a href="${t.href}" class="nav-tab${t.active ? ' active' : ''}">${t.label}</a>`).join('');
+}
+
+function buildAppSelect() {
+  const sel = document.getElementById('appSelect');
+  sel.innerHTML = (globalState.app_registry || [])
+    .map(a => `<option value="${escapeHTML(a.slug)}" ${a.slug === currentSlug ? 'selected' : ''}>${escapeHTML(a.name)}</option>`)
+    .join('');
+  sel.addEventListener('change', () => {
+    currentSlug = sel.value;
+    history.replaceState(null, '', `/decisions/${currentSlug}`);
+    buildNav();
+    loadApp(currentSlug);
+  });
+}
+
+async function loadApp(slug) {
+  decisionsData = await fetchJSON(`/api/app/${slug}/decisions`);
+  render();
+}
+
+function render() {
+  const el = document.getElementById('content');
+  const d = decisionsData;
+  el.innerHTML = '';
+
+  // Section 1: Overrides & Decisions
+  el.appendChild(renderOverrides(d));
+
+  // Section 2: Gate Results
+  el.appendChild(renderGateResults(d));
+
+  // Section 3: Session Timeline
+  el.appendChild(renderTimeline(d));
+
+  // Section 4: Agent Flow
+  el.appendChild(renderAgentFlow(d));
+
+  // Stats
+  document.getElementById('headerStats').innerHTML = `
+    <div class="stat"><span class="dot" style="background:var(--orange)"></span> ${countOverrides(d)} overrides</div>
+    <div class="stat"><span class="dot" style="background:var(--green)"></span> ${d.gate_results.filter(g => g.review_passed).length} gates passed</div>
+    <div class="stat"><span class="dot" style="background:var(--accent)"></span> ${d.timeline.length} sessions</div>
+  `;
+}
+
+function countOverrides(d) {
+  let n = 0;
+  if (d.overrides.manual_override) n++;
+  if (d.overrides.tier_1_5_override) n++;
+  n += d.overrides.queue_overrides.length;
+  n += d.decisions.filter(e => e.event === 'override_applied').length;
+  return n;
+}
+
+function renderOverrides(d) {
+  const sec = document.createElement('div');
+  sec.className = 'section';
+  const cards = [];
+
+  // App-state overrides
+  if (d.overrides.manual_override) {
+    const mo = d.overrides.manual_override;
+    cards.push(`<div class="decision-card override">
+      <div class="decision-meta"><span class="badge badge-override">Override</span> <span>Stage Skip</span> <span class="decision-timestamp">${fmtDate(mo.date)}</span></div>
+      <div class="decision-detail">${escapeHTML(mo.reason)}</div>
+    </div>`);
+  }
+  if (d.overrides.tier_1_5_override) {
+    const t = d.overrides.tier_1_5_override;
+    cards.push(`<div class="decision-card override">
+      <div class="decision-meta"><span class="badge badge-override">Override</span> <span>Tier 1.5 Bypass</span> <span class="decision-timestamp">${fmtDate(t.date)}</span></div>
+      <div class="decision-detail">${escapeHTML(t.reason)}</div>
+    </div>`);
+  }
+
+  // Queue overrides
+  for (const qo of d.overrides.queue_overrides) {
+    cards.push(`<div class="decision-card override">
+      <div class="decision-meta"><span class="badge badge-override">Override</span> <span>${escapeHTML(qo.action)}</span> <span class="decision-timestamp">${fmtDate(qo.override.date)}</span></div>
+      <div class="decision-detail">${escapeHTML(qo.override.reason || qo.override.type)}</div>
+    </div>`);
+  }
+
+  // Action-log decisions
+  for (const dec of d.decisions) {
+    const cls = dec.event === 'owner_approved' ? 'approved' : dec.event === 'owner_rejected' ? 'rejected' : 'override';
+    const badge = dec.event === 'owner_approved' ? 'approved' : dec.event === 'owner_rejected' ? 'rejected' : dec.event === 'resubmitted' ? 'resubmit' : 'override';
+    cards.push(`<div class="decision-card ${cls}">
+      <div class="decision-meta"><span class="badge badge-${badge}">${escapeHTML(dec.event.replace(/_/g, ' '))}</span> <span>${escapeHTML(dec.agent)}</span> <span class="decision-timestamp">${fmtDate(dec.timestamp)}</span></div>
+      <div class="decision-detail">${escapeHTML(dec.detail || dec.action_id)}</div>
+    </div>`);
+  }
+
+  sec.innerHTML = `
+    <div class="section-header">Overrides & Decisions <span class="section-count">${cards.length}</span></div>
+    <div class="section-body">${cards.length ? cards.join('') : '<div class="no-data">No owner decision events recorded yet</div>'}</div>
+  `;
+  return sec;
+}
+
+function renderGateResults(d) {
+  const sec = document.createElement('div');
+  sec.className = 'section';
+
+  if (!d.gate_results.length) {
+    sec.innerHTML = `<div class="section-header">Gate Results</div><div class="section-body"><div class="no-data">No review results yet</div></div>`;
+    return sec;
+  }
+
+  const rows = d.gate_results.map(g => {
+    const isAmend = g.type === 'amendment' || g.spec_id.includes('-amend-');
+    const resultBadge = g.review_attempts > 1 ? `<span class="badge-retry">RETRY x${g.review_attempts}</span>` : `<span class="badge-pass">PASS</span>`;
+    const amendBadge = isAmend ? '<span class="badge-amend">amend</span>' : '';
+    const stageDots = [
+      { label: 'C', attempts: g.compilation_attempts },
+      { label: 'T', attempts: g.test_execution_attempts },
+      { label: 'R', attempts: g.review_attempts },
+    ].map(s => `<span class="stage-dot ${s.attempts > 1 ? 'retry' : 'pass'}" title="${s.label}: ${s.attempts} attempt${s.attempts > 1 ? 's' : ''}"></span><span class="stage-label">${s.label}</span>`).join('');
+
+    const notesHtml = g.review_notes
+      ? `<div class="gate-notes truncated" onclick="this.classList.toggle('truncated');this.classList.toggle('expanded')">${escapeHTML(g.review_notes)}</div>`
+      : '<span style="color:var(--text-muted)">—</span>';
+
+    return `<tr>
+      <td>${escapeHTML(specLabel(g.spec_id))}${amendBadge}</td>
+      <td>S${g.sprint || '?'}</td>
+      <td>${resultBadge}</td>
+      <td><div class="stage-dots">${stageDots}</div></td>
+      <td>${notesHtml}</td>
+    </tr>`;
+  }).join('');
+
+  sec.innerHTML = `
+    <div class="section-header">Gate Results <span class="section-count">${d.gate_results.length} specs</span></div>
+    <div class="section-body">
+      <table class="gate-table">
+        <thead><tr><th>Spec</th><th>Sprint</th><th>Review</th><th>Stages</th><th>Notes</th></tr></thead>
+        <tbody>${rows}</tbody>
+      </table>
+    </div>
+  `;
+  return sec;
+}
+
+function renderTimeline(d) {
+  const sec = document.createElement('div');
+  sec.className = 'section';
+
+  if (!d.timeline.length) {
+    sec.innerHTML = `<div class="section-header">Session Timeline</div><div class="section-body"><div class="no-data">No action log entries yet</div></div>`;
+    return sec;
+  }
+
+  const sessions = d.timeline.map(s => {
+    const events = s.events.map(e => {
+      const dotClass = e.event === 'completed' ? 'completed' : e.event === 'failed' ? 'failed' : e.event === 'retry' ? 'retry' : e.event === 'started' ? 'started' : e.event === 'blocked' || e.event === 'cascade_blocked' ? 'blocked' : e.event === 'skipped' ? 'skipped' : 'created';
+      return `<div class="event-row">
+        <span class="event-dot ${dotClass}"></span>
+        <span class="event-id">${escapeHTML(e.action_id)}</span>
+        <span class="event-type">${escapeHTML(e.event)}</span>
+        <span class="event-agent">${escapeHTML(e.agent || '')}</span>
+        <span class="event-detail">${escapeHTML(e.detail || '')}</span>
+        <span class="event-time">${fmtTime(e.timestamp)}</span>
+      </div>`;
+    }).join('');
+
+    const startDate = fmtDate(s.start);
+    const dur = s.duration_minutes;
+    const durLabel = dur >= 60 ? `${Math.floor(dur / 60)}h ${dur % 60}m` : `${dur}m`;
+
+    return `<div class="session-block">
+      <div class="session-header" onclick="this.nextElementSibling.classList.toggle('collapsed')">
+        Session ${escapeHTML(s.session_id)}: ${startDate} <span class="session-duration">${durLabel} &middot; ${s.events.length} events</span>
+      </div>
+      <div class="session-events">${events}</div>
+    </div>`;
+  }).join('');
+
+  sec.innerHTML = `
+    <div class="section-header">Session Timeline <span class="section-count">${d.timeline.length} sessions</span></div>
+    <div class="section-body"><div class="timeline">${sessions}</div></div>
+  `;
+  return sec;
+}
+
+function renderAgentFlow(d) {
+  const sec = document.createElement('div');
+  sec.className = 'section';
+  const s = d.agent_statuses;
+
+  function node(label, agent) {
+    const status = s[agent] || 'pending';
+    return `<div class="flow-node ${status}" title="${escapeHTML(agent)}: ${escapeHTML(status)}">${escapeHTML(label)}</div>`;
+  }
+  const arrow = '<span class="flow-arrow">&rarr;</span>';
+
+  sec.innerHTML = `
+    <div class="section-header">Agent Flow</div>
+    <div class="section-body">
+      <div class="flow-diagram">
+        <div class="flow-phase">
+          <div class="flow-phase-label">Foundation</div>
+          <div class="flow-row">
+            ${node('PRD', 'PRD')}${arrow}
+            <div class="flow-fork">
+              <div class="flow-fork-row">${node('ARCH', 'ARCHITECTURE')}</div>
+              <div class="flow-fork-row">${node('DESIGN', 'DESIGN')}</div>
+              <div class="flow-fork-row">${node('REQ', 'REQUIREMENTS')}</div>
+            </div>
+            ${arrow}${node('Config', 'ORCHESTRATOR')}${arrow}${node('DS', 'ORCHESTRATOR')}${arrow}${node('Tier 1.5', 'ORCHESTRATOR')}
+          </div>
+        </div>
+        <div class="flow-phase">
+          <div class="flow-phase-label">Sprint Loop</div>
+          <div class="flow-row">
+            ${node('SPEC', 'SPEC')}${arrow}${node('CODE', 'CODE')}${arrow}${node('COMPILE', 'ORCHESTRATOR')}${arrow}${node('TEST', 'TEST')}${arrow}${node('REVIEW', 'REVIEW')}${arrow}${node('DEPLOY', 'ORCHESTRATOR')}${arrow}${node('RETRO', 'SPRINT-RETRO')}
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+  return sec;
+}
+
+init();
+</script>
+</body>
+</html>

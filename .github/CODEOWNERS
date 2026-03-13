@@ -1,0 +1,10 @@
+# Default owner for everything
+* @mpc-eng
+
+# Critical paths — require explicit approval
+CLAUDE.md @mpc-eng
+.claude/agents/ @mpc-eng
+.claude/commands/ @mpc-eng
+agents/schemas/ @mpc-eng
+agents/config/ @mpc-eng
+state.json @mpc-eng

@@ -1,0 +1,98 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Experiment Registry",
+  "description": "Global cross-app registry of A/B tests and their outcomes. Written by CONVERT, read by TRIAGE/SPEC/PMF-GATE/ANALYTICS for transferable insights.",
+  "type": "object",
+  "required": ["schema_version", "experiments"],
+  "properties": {
+    "schema_version": {
+      "type": "string",
+      "const": "3.4.0"
+    },
+    "experiments": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["experiment_id", "app_slug", "date_proposed", "status", "variable", "hypothesis", "principle_cited", "variant_a", "variant_b", "tags"],
+        "properties": {
+          "experiment_id": {
+            "type": "string",
+            "pattern": "^exp_[a-z0-9_]+_[0-9]{3}$",
+            "description": "Format: exp_<app_slug>_NNN"
+          },
+          "app_slug": {
+            "type": "string"
+          },
+          "date_proposed": {
+            "type": "string",
+            "format": "date"
+          },
+          "date_completed": {
+            "type": ["string", "null"],
+            "format": "date"
+          },
+          "status": {
+            "type": "string",
+            "enum": ["proposed", "running", "completed", "cancelled"]
+          },
+          "variable": {
+            "type": "string",
+            "enum": ["copy", "design", "position", "pricing"]
+          },
+          "hypothesis": {
+            "type": "string"
+          },
+          "principle_cited": {
+            "type": "string",
+            "description": "Behavioural principle with author and year"
+          },
+          "variant_a": {
+            "type": "string",
+            "description": "Control description"
+          },
+          "variant_b": {
+            "type": "string",
+            "description": "Proposed change description"
+          },
+          "target_metric": {
+            "type": "string"
+          },
+          "result": {
+            "type": ["object", "null"],
+            "properties": {
+              "winner": {
+                "type": "string",
+                "enum": ["a", "b", "inconclusive"]
+              },
+              "lift_percent": {
+                "type": ["number", "null"]
+              },
+              "sample_size": {
+                "type": ["integer", "null"]
+              },
+              "confidence": {
+                "type": ["number", "null"],
+                "description": "P-value or confidence level (e.g., 0.95)"
+              },
+              "duration_days": {
+                "type": ["integer", "null"]
+              }
+            },
+            "additionalProperties": false
+          },
+          "transferable_insight": {
+            "type": ["string", "null"],
+            "description": "One-sentence learning applicable to other apps in the portfolio"
+          },
+          "tags": {
+            "type": "array",
+            "items": { "type": "string" },
+            "description": "Searchable tags: onboarding, paywall, retention, core_loop, copy, pricing, etc."
+          }
+        },
+        "additionalProperties": false
+      }
+    }
+  },
+  "additionalProperties": false
+}

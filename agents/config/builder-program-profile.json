@@ -1,0 +1,294 @@
+{
+  "profile_name": "Anthropic Builder Program",
+  "profile_version": "2.0.0",
+  "description": "Evaluation constraints for ideas targeting the Claude Builder Program. Layers on top of standard APOS idea scoring — adds Claude-dependency, demo-ability, and VC-readiness filters.",
+  "program_context": {
+    "_config_note": "Update cohort_size, region, and timeline for your specific cohort.",
+    "cohort_size": 25,
+    "region": "YOUR_REGION",
+    "timeline": {
+      "applications_open": "YYYY-MM-DD",
+      "applications_close": "YYYY-MM-DD",
+      "program_start": "YYYY-MM-DD",
+      "program_end": "YYYY-MM-DD",
+      "showcase": "YYYY-MM-DD"
+    },
+    "phases": {
+      "ignite": { "weeks": "1-4", "goal": "Idea to working prototype" },
+      "build": { "weeks": "5-8", "goal": "Ship and gather feedback" },
+      "amplify": { "weeks": "9-12", "goal": "Refine pitch for showcase" }
+    },
+    "benefits": [
+      "3 months Claude Max (latest models + Claude Code)",
+      "Hands-on guidance from Anthropic Applied AI team",
+      "VC and founder network access",
+      "Builder programme graduate credential"
+    ],
+    "selection_criteria_stated": [
+      "Creativity in concept",
+      "Commercial potential",
+      "Shipping track record",
+      "Connection to builder ecosystem"
+    ]
+  },
+
+  "hard_gates": {
+    "description": "Ideas that fail ANY hard gate are scored 0 regardless of signal strength. These are non-negotiable for program acceptance.",
+    "gates": [
+      {
+        "id": "HG-1",
+        "name": "Claude Runtime Dependency",
+        "rule": "The product MUST use Claude API calls at runtime to deliver its core value. Claude as a build tool only (code generation, testing) does NOT satisfy this gate.",
+        "test": "Remove all Claude API calls — does the core feature still work? If yes, gate fails.",
+        "rationale": "Anthropic wants showcase products that grow API revenue and demonstrate Claude's capabilities to end users. Build-time-only dependency is invisible at the showcase demo."
+      },
+      {
+        "id": "HG-2",
+        "name": "12-Week Shippable",
+        "rule": "A solo developer must be able to ship a working, demo-ready product within 12 weeks. No ideas requiring regulatory approval, large dataset creation, hardware, or multi-sided marketplace bootstrapping.",
+        "test": "Can you demo the core loop to a room of VCs in Week 12? If no, gate fails.",
+        "rationale": "The program ends with a showcase. Products that are 'almost ready' fail the programme structure."
+      },
+      {
+        "id": "HG-3",
+        "name": "No Anthropic Product Collision",
+        "rule": "The product must NOT compete with Claude.ai, Claude Code, or the Anthropic API console. Adjacent is fine. Overlapping is fatal.",
+        "test": "Would an Anthropic PM see this as cannibalising their roadmap? If yes, gate fails.",
+        "rationale": "Anthropic won't fund or showcase products that compete with their own. They want ecosystem expansion, not fragmentation."
+      },
+      {
+        "id": "HG-4",
+        "name": "Regional Relevance",
+        "rule": "The product must have meaningful traction potential in your cohort's region. Regional focus is fine. Other-region-only is fatal.",
+        "test": "Does the primary user base exist in your cohort's region? If no, gate fails.",
+        "rationale": "Regional cohorts want regional success stories."
+      },
+      {
+        "id": "HG-5",
+        "name": "Model Displacement Test",
+        "rule": "The product must depend on at least one Claude-ONLY capability — a structural feature no other frontier model provides. 'Claude is better at X' is not enough. 'Only Claude can do X' is required.",
+        "test": "Swap Claude for GPT-4o, Gemini 2.5, or Llama 4. Does the core product still function? If yes, gate fails. If the product is degraded but still works, gate fails. If the product is architecturally impossible, gate passes.",
+        "structural_advantages": [
+          "Visible extended thinking (reasoning chains exposed to user — no other model does this)",
+          "MCP protocol ecosystem (18,250+ servers, Claude-native integration protocol — no equivalent exists)",
+          "Agent SDK autonomous execution (programmable long-running agents with context management — unique to Claude)",
+          "Constitutional AI as product feature (nuanced refusal/escalation behaviour in regulated domains)"
+        ],
+        "NOT_structural": [
+          "Better reasoning quality (marginal, competitors catch up)",
+          "Better vision accuracy (marginal, GPT-4o is competitive)",
+          "Better structured output (marginal, a hygiene factor)",
+          "Better multilingual (marginal, table stakes for frontier models)",
+          "Longer context window (Gemini claims longer, quality varies)",
+          "Better personality consistency (real but hard to verify, not architecturally unique)"
+        ],
+        "rationale": "Anthropic gains nothing from showcasing a product that works equally well on GPT-4o. The showcase must demonstrate why Claude specifically matters. Products built on Claude-only capabilities create ecosystem lock-in and grow Anthropic's moat."
+      }
+    ]
+  },
+
+  "scoring_modifiers": {
+    "description": "Additional modifiers applied AFTER standard APOS scoring. These capture program-specific value signals.",
+    "modifiers": [
+      {
+        "id": "BP-1",
+        "name": "Claude Depth Score",
+        "description": "How deeply Claude is embedded in the product experience. More Claude touchpoints = higher score.",
+        "values": {
+          "surface": { "bonus": 0, "description": "Single Claude API call (e.g., one-shot text generation). Could swap for GPT-4 trivially." },
+          "integrated": { "bonus": 0.25, "description": "Multiple Claude interactions per session. Claude handles a distinct capability the user experiences directly (e.g., coaching, analysis, conversation)." },
+          "core_loop": { "bonus": 0.5, "description": "Claude IS the core loop. Every session involves multi-turn Claude interaction. Product is meaningless without Claude specifically (tool use, extended thinking, vision, etc.)." }
+        },
+        "rationale": "Anthropic wants to showcase Claude's unique capabilities (tool use, extended thinking, vision, constitutional AI). Products that use Claude like a generic LLM are less valuable to the programme."
+      },
+      {
+        "id": "BP-2",
+        "name": "Demo Impact",
+        "description": "How compelling is the product in a 3-minute live demo to a room of VCs and Anthropic leadership?",
+        "values": {
+          "low": { "bonus": 0, "description": "Requires explanation to understand value. Backend-heavy, no visual wow moment." },
+          "medium": { "bonus": 0.25, "description": "Clear value proposition visible in demo. Some visual appeal but primarily functional." },
+          "high": { "bonus": 0.5, "description": "Jaw-drop demo moment. Visible before/after. Audience immediately understands and wants it." }
+        },
+        "rationale": "The showcase is the program's output. Products that demo well get disproportionate attention and reflect well on Anthropic."
+      },
+      {
+        "id": "BP-3",
+        "name": "VC Narrative Fit",
+        "description": "Does this idea have a venture-scale story, even if the initial product is narrow?",
+        "values": {
+          "niche": { "bonus": 0, "description": "Small, defined market with no obvious expansion path. Lifestyle business." },
+          "scalable": { "bonus": 0.25, "description": "Clear wedge market with plausible expansion (geographic, adjacent verticals, platform play)." },
+          "platform": { "bonus": 0.5, "description": "Could become a platform or category-defining product. Network effects, data moats, or compounding value." }
+        },
+        "rationale": "The program includes VC network access. VCs want to see venture-scale potential even in early-stage products."
+      }
+    ]
+  },
+
+  "claude_capability_targets": {
+    "description": "Claude features classified by displacement resistance. Structural advantages cannot be replicated by other models. Marginal advantages can be matched with effort.",
+    "structural_only": {
+      "description": "Capabilities that ONLY Claude provides. Products built on these pass HG-5 automatically.",
+      "capabilities": [
+        {
+          "capability": "Visible Extended Thinking",
+          "why_structural": "Claude is the only frontier model that exposes reasoning chains to the user. GPT-4o, Gemini, and Llama produce opaque decisions. Products that require the user to SEE the reasoning (audit, trust, verification, compliance) are architecturally impossible on other models.",
+          "product_primitive": "Auditable AI decisions, transparent reasoning, human-AI collaborative thinking, EU AI Act Article 13/14 compliance",
+          "example_products": "Explainable decision engines, regulatory compliance layers, interactive reasoning tools for high-stakes domains"
+        },
+        {
+          "capability": "MCP Protocol Ecosystem",
+          "why_structural": "DOWNGRADED (March 2026): MCP was donated to the Linux Foundation (AAIF) in December 2025. OpenAI adopted MCP in March 2025. 97M+ monthly SDK downloads across ALL major models. MCP is now an open standard — NOT Claude-structural. Products built on MCP work on GPT-4o. Use MCP for integration depth (switching cost from breadth of connections), but it does NOT pass the displacement test alone.",
+          "status": "DOWNGRADED_TO_STRONG_BUT_REPLICABLE",
+          "product_primitive": "Cross-tool integration depth creates switching cost but not displacement. Combine with structural capabilities for moat.",
+          "example_products": "MCP enhances products built on structural capabilities (thinking + MCP, Agent SDK + MCP) but cannot be the sole foundation"
+        },
+        {
+          "capability": "Agent SDK (Autonomous Execution)",
+          "why_structural": "The Agent SDK provides programmable long-running agents with context management (compaction, session resume, tool orchestration). Combined with MCP, it enables autonomous agents that run scheduled workflows without human triggering. No other model provides an equivalent programmable agent runtime.",
+          "product_primitive": "Always-on autonomous agents, scheduled workflow execution, long-running task completion",
+          "example_products": "Autonomous compliance officers, continuous monitoring agents, overnight analysis agents"
+        },
+        {
+          "capability": "Constitutional AI (Nuanced Safety)",
+          "why_structural": "Claude's safety behaviour is built-in, nuanced, and non-programmable. In regulated domains, 'AI that knows when to escalate vs. act' is a product feature. This isn't configurable — it's architectural. Competitors either over-refuse or under-refuse.",
+          "product_primitive": "Trustworthy AI in regulated/sensitive domains, appropriate escalation, liability management",
+          "example_products": "Products in healthcare-adjacent, legal-adjacent, financial-adjacent domains where knowing limits matters"
+        }
+      ]
+    },
+    "strong_but_replicable": {
+      "description": "Capabilities where Claude is currently best but competitors can match with effort. Use these to ENHANCE a structurally-moated idea, not as the sole foundation.",
+      "capabilities": [
+        {
+          "capability": "Extended Thinking (reasoning quality)",
+          "note": "The QUALITY of reasoning is strong but replicable. The VISIBILITY of reasoning is structural. Use reasoning quality to enhance, visibility to differentiate."
+        },
+        {
+          "capability": "Tool Use Reliability",
+          "note": "Claude's multi-step tool use is more reliable than GPT-4o today, but the gap is narrowing. Build on MCP ecosystem for structural moat, not tool use reliability alone."
+        },
+        {
+          "capability": "Vision / Document Understanding",
+          "note": "Competitive with GPT-4o. Use to enhance a structurally-moated idea, not as sole differentiator."
+        },
+        {
+          "capability": "Long Context (200K)",
+          "note": "Gemini claims longer context. Claude's retrieval quality is better but the gap isn't architectural. Use context depth to enhance, not differentiate."
+        },
+        {
+          "capability": "Personality Consistency",
+          "note": "Real but hard to verify and market. Not architecturally unique."
+        }
+      ]
+    },
+    "commodity": {
+      "description": "Capabilities every frontier model provides. Never build a product moat on these alone.",
+      "capabilities": ["Text generation", "Summarisation", "Translation", "Structured output", "Code generation", "Multilingual support"]
+    }
+  },
+
+  "anti_patterns": {
+    "description": "Idea shapes that look appealing but consistently fail program selection or showcase.",
+    "patterns": [
+      {
+        "name": "ChatGPT Wrapper",
+        "signal": "Core feature is 'chat with Claude about X'. No structured interaction, tool use, or domain-specific UX.",
+        "why_fails": "Indistinguishable from claude.ai with a system prompt. Anthropic won't showcase what their own product already does."
+      },
+      {
+        "name": "LLM-Agnostic SaaS",
+        "signal": "Could swap Claude for GPT-4, Gemini, or Llama with a one-line change. No Claude-specific features used.",
+        "why_fails": "Doesn't demonstrate Claude's unique value. Anthropic gains nothing from showcasing a product that works equally well on a competitor's model."
+      },
+      {
+        "name": "AI Feature Bolt-On",
+        "signal": "An otherwise complete product with 'AI-powered' sprinkled on one feature.",
+        "why_fails": "The AI is decorative, not structural. Remove it and the product still works. Bad showcase optics."
+      },
+      {
+        "name": "Regulated Professional Tool",
+        "signal": "Requires FCA authorisation, medical device certification, legal practising certificate, or similar.",
+        "why_fails": "Cannot ship in 12 weeks. Regulatory approval alone exceeds the programme timeline."
+      },
+      {
+        "name": "Pure B2C Content App",
+        "signal": "AI generates content (stories, images, social posts) for consumers to consume.",
+        "why_fails": "Commodity play. Every LLM provider has this. No moat, no network effects, high churn."
+      },
+      {
+        "name": "Model-Agnostic Professional Tool",
+        "signal": "AI applied to a professional workflow (contract review, due diligence, coaching, proposal writing). Uses Claude capabilities (vision, reasoning, long context) but none that are structurally unique to Claude. Could swap model with integration work, not architectural change.",
+        "why_fails": "Enters crowded AI-tool markets with no Claude-specific moat. Competitors using GPT-4o or Gemini can replicate the product. Anthropic wants to showcase why Claude is DIFFERENT, not why Claude is ALSO GOOD AT the same thing every other model does. The displacement test (HG-5) catches this at the gate level, but this anti-pattern helps identify it earlier during ideation."
+      },
+      {
+        "name": "API Feature Wrapper",
+        "signal": "Core value is a single Claude API feature (visible thinking, tool use, vision) wrapped in a domain-specific UI. The product can be described as '[Claude feature] + [domain UI]'. No substantial value-add beyond the Claude interaction itself.",
+        "why_fails": "Anyone with a Claude API key can access the same feature. The product is a UI theme on an API parameter, not a business. Anthropic won't showcase what a developer can build in an afternoon with their API docs. The moat must come from what ACCUMULATES through Claude usage (data, patterns, predictions), not from displaying a Claude feature."
+      },
+      {
+        "name": "Process-as-Product",
+        "signal": "The core innovation is a methodology or framework (prosecution/defence evaluation, structured gates, adversarial review) that could work on a whiteboard or in a spreadsheet. Claude accelerates the process but the process has value without Claude.",
+        "why_fails": "If the methodology works without AI, Claude is an accelerant — and accelerants don't pass HG-5. The product must generate something (data, predictions, cross-tool insights) that the process alone CANNOT produce. The test: strip away Claude entirely — is the methodology still valuable? If yes, Claude is decorative."
+      },
+      {
+        "name": "Single-Tool AI Enhancement",
+        "signal": "An AI layer on top of one existing tool (AI for Jira, AI for Confluence, AI for Figma). Value exists within the context of the tool it enhances.",
+        "why_fails": "The tool vendor will add this feature themselves using the same Claude API. Jira, Linear, Notion, Figma, Salesforce all have AI teams. A third-party AI enhancement of their product is a feature request, not a standalone business. The product must operate ACROSS tools or on a data type the tool doesn't capture."
+      }
+    ]
+  },
+
+  "ideal_profile": {
+    "description": "The archetypal idea that maximises acceptance probability. The key insight: Anthropic doesn't want products that USE Claude. They want products where Claude enables a genuinely new category of value — where the data generated through Claude usage compounds into a moat no competitor can replicate.",
+    "characteristics": [
+      "Founded on deep domain expertise — the builder knows the problem from years of direct experience, not from API capability scanning",
+      "Claude capabilities combine into a SYSTEM (multiple interactions per session, cross-tool orchestration) — not a single API call wrapped in a UI",
+      "Generates a proprietary data type through Claude usage (reasoning corpus, decision traces, pattern libraries) that no existing tool captures",
+      "The data compounds: more usage → better predictions → more value → stronger lock-in. The product at month 12 is fundamentally more valuable than at month 1",
+      "Survives the Incumbent Feature Test: a named incumbent (Jira, Linear, Salesforce, Productboard) cannot replicate the core value by adding a feature, because the data model or data type is structurally different",
+      "Has a quantifiable CFO pitch: £X waste identified → £Y saved → Zx ROI. Real numbers, not vibes",
+      "Creates a new category (Gong created 'revenue intelligence' — what category does this create?)",
+      "3-minute demo shows a SYSTEM working (cross-tool data mining, pattern detection, predictive intervention) — not a single Claude interaction",
+      "First customer reachable without enterprise sales cycle: product consultant, startup CPO, agency founder, or individual PM adopting bottom-up",
+      "Clear B2B or prosumer revenue model — per-evaluation, per-seat, or hybrid. Can charge from user #1",
+      "Regional catalyst: regulation, workforce shortage, or structural market force creating urgency NOW",
+      "Solo-buildable in 12 weeks (web preferred for speed)",
+      "Does NOT compete with Claude.ai, Claude Code, or any Anthropic product"
+    ]
+  },
+
+  "idea_generation_instructions": {
+    "description": "How the Idea Agent should use this profile during generation.",
+    "process": [
+      "1. Start from CDO domain expertise (Phase 0) — NOT from Claude capabilities. The best ideas come from founders who know a domain deeply, not engineers who know an API",
+      "2. Map domain problem to Claude capabilities (Phase 1) — identify which structural capabilities enable a solution that couldn't exist before",
+      "3. Apply three kill tests (Phase 1.5): Wrapper Test (is this [Claude feature] + [domain UI]?), Board Test (what stops the incumbent?), CFO Test (quantified ROI). Kill aggressively — 80%+ of directions should die here",
+      "4. Research the MARKET, not the API (Phase 2) — validate the problem, not the technology",
+      "5. Design the data moat BEFORE the product (Phase 3) — what accumulates, how it compounds, why incumbents can't replicate",
+      "6. Write the CFO pitch with real numbers (Phase 4) — if ROI < 5x, sharpen or kill",
+      "7. Apply all 5 hard gates (HG-1 through HG-5). Any failure = score 0. HG-5 is about the SYSTEM and DATA moat, not a single feature",
+      "8. Check against ALL anti-patterns — especially 'API Feature Wrapper' and 'Process-as-Product' which are the most common failure modes",
+      "9. Apply standard APOS scoring (1-5 base + owner_proximity + trend_coupling modifiers)",
+      "10. Apply Builder Program modifiers (BP-1 through BP-3) on top of APOS score",
+      "11. Verify ALL required output fields are filled (including data_moat_design, incumbent_defence, cfo_pitch)",
+      "12. Final score = APOS score + BP modifiers, capped at 5.0"
+    ],
+    "additional_output_fields": {
+      "claude_runtime_usage": "Description of how Claude API is used at runtime in the product — must describe a SYSTEM of multiple interactions, not a single API call",
+      "claude_capabilities_used": ["extended_thinking", "tool_use", "vision", "multi_turn", "structured_output", "text_generation", "mcp_ecosystem", "agent_sdk", "constitutional_ai"],
+      "claude_depth": "surface | integrated | core_loop",
+      "demo_impact": "low | medium | high",
+      "vc_narrative": "niche | scalable | platform",
+      "builder_program_risk": "null or description of anti-pattern match",
+      "builder_program_score": "Final score after all modifiers",
+      "showcase_pitch": "One sentence describing the showcase demo moment — must describe a SYSTEM demo, not a single feature display",
+      "why_claude_only": "REQUIRED. Must reference the SYSTEM and DATA moat, not a single capability. Explain what proprietary data accumulates through Claude usage and why the product's value proposition collapses without it. If this paragraph only mentions one API feature ('visible thinking'), the idea is a wrapper — kill it.",
+      "non_displaceable_moat": "REQUIRED. Must be 'data' (reasoning corpus, decision patterns that compound with usage) or 'ecosystem' (cross-tool integration depth + proprietary data type). 'Architectural' (product impossible without Claude) is only valid if the impossibility comes from the SYSTEM, not a single feature. If the moat is 'feature-level' (Claude has visible thinking), the idea is a wrapper — kill it.",
+      "data_moat_design": "REQUIRED. What proprietary data accumulates through product usage? How does it compound? At what threshold do patterns emerge? What would the customer lose by switching after 12 months? Must be specific — 'reasoning archives' is not enough. Describe the capture → index → detect → predict → lock-in cycle.",
+      "incumbent_defence": "REQUIRED. Name the specific incumbent (Jira, Linear, Productboard, Salesforce, etc.) and explain why they cannot replicate the core value as a feature. Must reference a structural difference (data model, data type, cross-tool scope), not a temporal advantage (speed, quality).",
+      "cfo_pitch": "REQUIRED. Quantified cost-saving narrative: '£X waste → £Y saved → Zx ROI.' Must include specific numbers with reasoning, not estimates."
+    }
+  }
+}
