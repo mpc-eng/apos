@@ -1,0 +1,212 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "UX-REVIEW Output",
+  "description": "Validates UX-REVIEW gate agent output for the APOS pipeline.",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "agent",
+    "timestamp",
+    "review_passed",
+    "hook_model_audit",
+    "usability_gate",
+    "jtbd_emotional_layer",
+    "category_register",
+    "accessibility_gate",
+    "self_check"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": { "type": "string", "const": "3.4.0" },
+    "agent": { "type": "string", "const": "UX-REVIEW" },
+    "timestamp": { "type": "string", "format": "date-time" },
+    "review_passed": { "type": "boolean" },
+    "hook_model_audit": {
+      "type": "object",
+      "required": ["trigger", "action", "variable_reward", "investment"],
+      "additionalProperties": false,
+      "properties": {
+        "trigger": { "$ref": "#/definitions/hook_model_phase" },
+        "action": { "$ref": "#/definitions/hook_model_phase" },
+        "variable_reward": { "$ref": "#/definitions/hook_model_phase" },
+        "investment": { "$ref": "#/definitions/hook_model_phase" }
+      }
+    },
+    "usability_gate": {
+      "type": "object",
+      "required": ["core_loop_completion", "d2_return", "notes_specificity"],
+      "additionalProperties": false,
+      "properties": {
+        "core_loop_completion": {
+          "type": "object",
+          "required": ["all_users_completed", "users_completed", "users_total"],
+          "additionalProperties": false,
+          "properties": {
+            "all_users_completed": { "type": "boolean" },
+            "users_completed": { "type": "integer", "minimum": 0 },
+            "users_total": { "type": "integer", "minimum": 1 }
+          }
+        },
+        "d2_return": {
+          "type": "object",
+          "required": ["met_threshold", "return_count", "users_total", "d2_collection_method"],
+          "additionalProperties": false,
+          "properties": {
+            "met_threshold": { "type": "boolean" },
+            "return_count": { "type": "integer", "minimum": 0 },
+            "users_total": { "type": "integer", "minimum": 1 },
+            "d2_collection_method": {
+              "type": "string",
+              "enum": ["testflight_analytics", "manual_check_in", "session_log"]
+            }
+          }
+        },
+        "notes_specificity": {
+          "type": "object",
+          "required": ["sufficient", "detail"],
+          "additionalProperties": false,
+          "properties": {
+            "sufficient": { "type": "boolean" },
+            "detail": { "type": "string" }
+          }
+        }
+      }
+    },
+    "jtbd_emotional_layer": {
+      "type": "object",
+      "required": ["emotional_state_defined", "emotional_completion_state", "gap_description"],
+      "additionalProperties": false,
+      "properties": {
+        "emotional_state_defined": { "type": "boolean" },
+        "emotional_completion_state": { "type": "string" },
+        "gap_description": { "type": "string" }
+      }
+    },
+    "category_register": {
+      "type": "object",
+      "required": ["register", "mismatches"],
+      "additionalProperties": false,
+      "properties": {
+        "register": {
+          "type": "string",
+          "enum": ["positive_affect", "high_anxiety", "neutral_utility"]
+        },
+        "mismatches": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["element", "expected_tone", "actual_tone"],
+            "additionalProperties": false,
+            "properties": {
+              "element": { "type": "string" },
+              "expected_tone": { "type": "string" },
+              "actual_tone": { "type": "string" }
+            }
+          }
+        }
+      }
+    },
+    "accessibility_gate": {
+      "type": "object",
+      "required": ["voiceover", "dynamic_type", "contrast_ratio"],
+      "additionalProperties": false,
+      "properties": {
+        "voiceover": {
+          "type": "object",
+          "required": ["passed", "issues"],
+          "additionalProperties": false,
+          "properties": {
+            "passed": { "type": "boolean" },
+            "issues": { "type": "array", "items": { "type": "string" } }
+          }
+        },
+        "dynamic_type": {
+          "type": "object",
+          "required": ["passed", "issues"],
+          "additionalProperties": false,
+          "properties": {
+            "passed": { "type": "boolean" },
+            "issues": { "type": "array", "items": { "type": "string" } }
+          }
+        },
+        "contrast_ratio": {
+          "type": "object",
+          "required": ["passed", "minimum_ratio", "issues"],
+          "additionalProperties": false,
+          "properties": {
+            "passed": { "type": "boolean" },
+            "minimum_ratio": { "type": "number", "minimum": 0 },
+            "issues": { "type": "array", "items": { "type": "string" } }
+          }
+        }
+      }
+    },
+    "persona_wow_alignment": {
+      "type": "object",
+      "required": ["persona_priority_map_exists", "p0_personas", "p0_alignment", "empty_state_multi_path", "migration_path_exists"],
+      "additionalProperties": false,
+      "properties": {
+        "persona_priority_map_exists": { "type": "boolean" },
+        "p0_personas": {
+          "type": "array",
+          "items": { "type": "string" },
+          "minItems": 1,
+          "maxItems": 2
+        },
+        "p0_alignment": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["persona", "day1_state_defined", "wow_path_defined", "wow_under_60s", "no_registration_wall"],
+            "additionalProperties": false,
+            "properties": {
+              "persona": { "type": "string" },
+              "day1_state_defined": { "type": "boolean" },
+              "wow_path_defined": { "type": "boolean" },
+              "wow_under_60s": { "type": "boolean" },
+              "no_registration_wall": { "type": "boolean" }
+            }
+          },
+          "minItems": 1,
+          "maxItems": 2
+        },
+        "empty_state_multi_path": { "type": "boolean" },
+        "migration_path_exists": { "type": "boolean" }
+      }
+    },
+    "redesign_brief": {
+      "type": "string",
+      "minLength": 50,
+      "description": "Required when review_passed is false. Must describe specific changes needed."
+    },
+    "self_check": {
+      "type": "object",
+      "required": ["agent_badge", "output_schema_valid", "gate_type"],
+      "additionalProperties": false,
+      "properties": {
+        "agent_badge": { "type": "string", "const": "[UX-REVIEW]" },
+        "output_schema_valid": { "type": "boolean" },
+        "gate_type": { "type": "string", "const": "hard_gate" }
+      }
+    }
+  },
+  "if": {
+    "properties": { "review_passed": { "const": false } },
+    "required": ["review_passed"]
+  },
+  "then": {
+    "required": ["redesign_brief"]
+  },
+  "definitions": {
+    "hook_model_phase": {
+      "type": "object",
+      "required": ["observed_in_usability_notes", "evidence", "gap_description"],
+      "additionalProperties": false,
+      "properties": {
+        "observed_in_usability_notes": { "type": "boolean" },
+        "evidence": { "type": "string" },
+        "gap_description": { "type": "string" }
+      }
+    }
+  }
+}

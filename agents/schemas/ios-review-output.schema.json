@@ -1,0 +1,154 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "IOS-REVIEW Output",
+  "description": "Validates the output payload produced by the IOS-REVIEW gate agent. Each run reviews 1-5 specs and returns testability rewrites, privacy-manifest checks, entitlement capability flags, and HIG flags.",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "agent",
+    "timestamp",
+    "review_passed",
+    "specs_reviewed",
+    "self_check"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "type": "string",
+      "const": "3.4.0"
+    },
+    "agent": {
+      "type": "string",
+      "const": "IOS-REVIEW"
+    },
+    "timestamp": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "review_passed": {
+      "type": "boolean",
+      "description": "Overall pass/fail verdict for every spec in the batch."
+    },
+    "specs_reviewed": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "spec_file",
+          "ac_testability",
+          "privacy_manifest_check",
+          "entitlement_flags",
+          "hig_flags"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "spec_file": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Relative path of the spec file under review."
+          },
+          "ac_testability": {
+            "type": "object",
+            "required": ["all_testable", "rewrites"],
+            "additionalProperties": false,
+            "properties": {
+              "all_testable": {
+                "type": "boolean",
+                "description": "True when every AC in the spec is testable."
+              },
+              "rewrites": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "required": ["ac_id", "original", "rewritten", "rewrite_confidence", "xctest_assertion_type"],
+                  "additionalProperties": false,
+                  "properties": {
+                    "ac_id": { "type": "string", "minLength": 1 },
+                    "original": { "type": "string", "minLength": 1 },
+                    "rewritten": { "type": "string", "minLength": 1 },
+                    "rewrite_confidence": {
+                      "type": "string",
+                      "enum": ["high", "medium", "low"]
+                    },
+                    "xctest_assertion_type": { "type": "string", "minLength": 1 }
+                  }
+                }
+              }
+            }
+          },
+          "privacy_manifest_check": {
+            "type": "object",
+            "required": ["privacy_info_present", "missing_declarations", "required_reason_apis_found"],
+            "additionalProperties": false,
+            "properties": {
+              "privacy_info_present": { "type": "boolean" },
+              "missing_declarations": {
+                "type": "array",
+                "items": { "type": "string" }
+              },
+              "required_reason_apis_found": {
+                "type": "array",
+                "items": { "type": "string" }
+              }
+            }
+          },
+          "entitlement_flags": {
+            "type": "object",
+            "required": ["capabilities_found"],
+            "additionalProperties": false,
+            "properties": {
+              "capabilities_found": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "required": ["capability", "declared_in_spec"],
+                  "additionalProperties": false,
+                  "properties": {
+                    "capability": {
+                      "type": "string",
+                      "enum": [
+                        "push_notifications",
+                        "healthkit",
+                        "background_modes",
+                        "cloudkit",
+                        "sign_in_with_apple",
+                        "nfc",
+                        "siri"
+                      ]
+                    },
+                    "declared_in_spec": { "type": "boolean" }
+                  }
+                }
+              }
+            }
+          },
+          "hig_flags": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": ["flag_id", "description", "spec_justification_required"],
+              "additionalProperties": false,
+              "properties": {
+                "flag_id": { "type": "string", "minLength": 1 },
+                "description": { "type": "string", "minLength": 1 },
+                "spec_justification_required": { "type": "boolean" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "self_check": {
+      "type": "object",
+      "required": ["agent_badge", "output_schema_valid", "gate_type", "batch_mode", "specs_in_batch"],
+      "additionalProperties": false,
+      "properties": {
+        "agent_badge": { "type": "string", "const": "[IOS-REVIEW]" },
+        "output_schema_valid": { "type": "boolean" },
+        "gate_type": { "type": "string", "const": "hard_gate" },
+        "batch_mode": { "type": "boolean" },
+        "specs_in_batch": { "type": "integer", "minimum": 1, "maximum": 5 }
+      }
+    }
+  }
+}

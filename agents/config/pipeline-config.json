@@ -1,0 +1,28 @@
+{
+  "prompt_caching": {
+    "enabled": true,
+    "strategy": "auto",
+    "description": "Cache system prompts and agent definitions across runs to reduce token costs. Agent definition markdown files and schema files are cached as stable context."
+  },
+  "batch_api": {
+    "enabled": true,
+    "use_for": [
+      "monday_chain",
+      "ios_review_batch_mode"
+    ],
+    "description": "Use Batch API for Monday chain (MONO-REVIEW + REALITY-CHECK) and IOS-REVIEW batch mode (up to 5 specs). Reduces cost by 50% for non-latency-sensitive runs."
+  },
+  "cost_management": {
+    "token_budget_ceilings": {
+      "per_agent_run_max_tokens": 16000,
+      "daily_pipeline_max_tokens": 100000,
+      "weekly_pipeline_max_tokens": 500000
+    },
+    "spend_alerting": {
+      "enabled": true,
+      "daily_spend_alert_usd": 2.00,
+      "weekly_spend_alert_usd": 10.00,
+      "alert_channel": "state.json"
+    }
+  }
+}

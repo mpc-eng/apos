@@ -1,0 +1,490 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Research Agent Output",
+  "description": "Deep feasibility research output for owner-suggested ideas",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "agent",
+    "timestamp",
+    "idea_input",
+    "idea_title",
+    "market_sizing",
+    "regulatory_context",
+    "competitors",
+    "competitive_landscape",
+    "competitive_landscape_summary",
+    "user_research",
+    "technical_feasibility",
+    "monetisation",
+    "unknowns",
+    "decision_card",
+    "recommendation",
+    "recommendation_rationale",
+    "value_chain",
+    "self_check"
+  ],
+  "properties": {
+    "schema_version": {
+      "type": "string",
+      "const": "3.4.0"
+    },
+    "agent": {
+      "type": "string",
+      "const": "RESEARCH"
+    },
+    "timestamp": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "idea_input": {
+      "type": "string",
+      "description": "Owner's original idea description, verbatim"
+    },
+    "idea_title": {
+      "type": "string",
+      "description": "Derived short title for the idea"
+    },
+    "research_duration_minutes": {
+      "type": "number",
+      "minimum": 0
+    },
+    "market_sizing": {
+      "type": "object",
+      "required": ["tam", "sam", "som", "market_trend", "trend_evidence"],
+      "properties": {
+        "tam": {
+          "type": "object",
+          "required": ["value", "source"],
+          "properties": {
+            "value": { "type": "string" },
+            "source": { "type": "string" }
+          }
+        },
+        "sam": {
+          "type": "object",
+          "required": ["value", "source"],
+          "properties": {
+            "value": { "type": "string" },
+            "source": { "type": "string" }
+          }
+        },
+        "som": {
+          "type": "object",
+          "required": ["value", "source"],
+          "properties": {
+            "value": { "type": "string" },
+            "source": { "type": "string" }
+          }
+        },
+        "market_trend": {
+          "type": "string",
+          "enum": ["growing", "stable", "declining"]
+        },
+        "trend_evidence": {
+          "type": "string"
+        }
+      }
+    },
+    "regulatory_context": {
+      "type": "object",
+      "required": ["drivers", "risks", "structural_advantages", "structural_risks"],
+      "properties": {
+        "drivers": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["regulation", "effective_date", "affected_population", "source"],
+            "properties": {
+              "regulation": { "type": "string" },
+              "effective_date": { "type": "string" },
+              "affected_population": { "type": "string" },
+              "source": { "type": "string" }
+            }
+          }
+        },
+        "risks": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["risk", "severity", "detail"],
+            "properties": {
+              "risk": { "type": "string" },
+              "severity": {
+                "type": "string",
+                "enum": ["blocking", "significant", "minor"]
+              },
+              "detail": { "type": "string" }
+            }
+          }
+        },
+        "structural_advantages": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "structural_risks": {
+          "type": "array",
+          "items": { "type": "string" }
+        }
+      }
+    },
+    "competitors": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["name", "platform", "pricing", "gap_type", "gap_detail"],
+        "properties": {
+          "name": { "type": "string" },
+          "platform": {
+            "type": "string",
+            "enum": ["ios", "android", "web", "cross_platform"]
+          },
+          "pricing": { "type": "string" },
+          "estimated_downloads": { "type": "string" },
+          "funding": { "type": ["string", "null"] },
+          "app_store_rating": { "type": ["number", "null"] },
+          "review_count": { "type": ["integer", "null"] },
+          "top_complaints": {
+            "type": "array",
+            "items": { "type": "string" }
+          },
+          "strengths": {
+            "type": "array",
+            "items": { "type": "string" }
+          },
+          "gap_type": {
+            "type": "string",
+            "enum": ["structural", "temporal", "cosmetic"]
+          },
+          "gap_detail": { "type": "string" }
+        }
+      }
+    },
+    "competitive_landscape": {
+      "type": "string",
+      "enum": ["red_ocean", "blue_ocean", "emerging"]
+    },
+    "competitive_landscape_summary": {
+      "type": "string"
+    },
+    "user_research": {
+      "type": "object",
+      "required": [
+        "sources_searched",
+        "data_points_collected",
+        "verbatim_quotes",
+        "jtbd",
+        "switching_trigger",
+        "return_trigger",
+        "demand_narrative",
+        "negative_signals_summary"
+      ],
+      "properties": {
+        "sources_searched": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "data_points_collected": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "verbatim_quotes": {
+          "type": "array",
+          "minItems": 10,
+          "items": {
+            "type": "object",
+            "required": ["quote", "source", "approximate_date", "signal_type"],
+            "properties": {
+              "quote": { "type": "string" },
+              "source": { "type": "string" },
+              "approximate_date": { "type": "string" },
+              "signal_type": {
+                "type": "string",
+                "enum": [
+                  "elaborate_workaround",
+                  "repeated_failure",
+                  "non_consumption",
+                  "stated_demand",
+                  "willingness_to_pay",
+                  "negative_signal"
+                ]
+              }
+            }
+          }
+        },
+        "jtbd": { "type": "string" },
+        "switching_trigger": { "type": "string" },
+        "return_trigger": { "type": "string" },
+        "demand_narrative": { "type": "string" },
+        "negative_signals_summary": { "type": "string" }
+      }
+    },
+    "technical_feasibility": {
+      "type": "object",
+      "required": [
+        "core_requirements",
+        "api_availability",
+        "apple_framework_leverage",
+        "data_sourcing",
+        "complexity_estimate",
+        "build_weeks_estimate",
+        "technical_risks",
+        "third_party_dependencies"
+      ],
+      "properties": {
+        "core_requirements": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "api_availability": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["api", "status", "detail"],
+            "properties": {
+              "api": { "type": "string" },
+              "status": {
+                "type": "string",
+                "enum": ["public", "authenticated", "rate_limited", "nonexistent", "unknown"]
+              },
+              "detail": { "type": "string" }
+            }
+          }
+        },
+        "apple_framework_leverage": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "data_sourcing": { "type": "string" },
+        "complexity_estimate": {
+          "type": "string",
+          "enum": ["low", "medium", "high", "infeasible"]
+        },
+        "build_weeks_estimate": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "technical_risks": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "third_party_dependencies": {
+          "type": "array",
+          "items": { "type": "string" }
+        }
+      }
+    },
+    "monetisation": {
+      "type": "object",
+      "required": [
+        "category_pricing",
+        "wtp_evidence",
+        "recommended_model",
+        "recommended_pricing",
+        "conservative_mrr_12mo",
+        "ltv_cac_trajectory",
+        "revenue_scalability"
+      ],
+      "properties": {
+        "category_pricing": {
+          "type": "array",
+          "minItems": 5,
+          "items": {
+            "type": "object",
+            "required": ["app", "price", "model"],
+            "properties": {
+              "app": { "type": "string" },
+              "price": { "type": "string" },
+              "model": { "type": "string" }
+            }
+          }
+        },
+        "wtp_evidence": { "type": "string" },
+        "recommended_model": {
+          "type": "string",
+          "enum": ["subscription", "one_time", "freemium"]
+        },
+        "recommended_pricing": { "type": "string" },
+        "conservative_mrr_12mo": { "type": "string" },
+        "ltv_cac_trajectory": {
+          "type": "string",
+          "enum": ["healthy", "marginal", "unfavourable"]
+        },
+        "revenue_scalability": {
+          "type": "string",
+          "enum": ["automated", "semi_manual", "manual"]
+        }
+      }
+    },
+    "value_chain": {
+      "type": "object",
+      "description": "Module 8 output — Value Chain Stress Test. Mandatory for all ideas. Decomposes value proposition into delivery steps and assesses deliverability.",
+      "required": ["steps", "bottleneck_step", "bottleneck_summary", "mvp_value_chain", "overall_deliverability"],
+      "properties": {
+        "steps": {
+          "type": "array",
+          "minItems": 3,
+          "maxItems": 7,
+          "items": {
+            "type": "object",
+            "required": ["step_number", "name", "required_inputs", "input_availability", "input_sources", "technical_approach", "difficulty", "bottleneck_risk"],
+            "properties": {
+              "step_number": { "type": "integer" },
+              "name": { "type": "string" },
+              "required_inputs": {
+                "type": "array",
+                "items": { "type": "string" }
+              },
+              "input_availability": {
+                "type": "string",
+                "enum": ["public_free", "public_paid", "partnership_required", "crowdsource_from_users", "build_from_scratch", "nonexistent"]
+              },
+              "input_sources": {
+                "type": "array",
+                "items": { "type": "string" }
+              },
+              "technical_approach": { "type": "string" },
+              "difficulty": {
+                "type": "string",
+                "enum": ["easy", "moderate", "hard", "very_hard"]
+              },
+              "bottleneck_risk": {
+                "type": "string",
+                "enum": ["critical", "degraded", "optional"]
+              }
+            }
+          }
+        },
+        "bottleneck_step": {
+          "type": "integer",
+          "description": "Step number of the identified bottleneck"
+        },
+        "bottleneck_summary": {
+          "type": "string",
+          "description": "One sentence: what is the hardest step and why"
+        },
+        "mvp_value_chain": {
+          "type": "string",
+          "description": "Which steps are essential for v1 and how the value prop works without the hardest step"
+        },
+        "overall_deliverability": {
+          "type": "string",
+          "enum": ["fully_deliverable", "deliverable_with_constraints", "structurally_risky", "undeliverable"]
+        }
+      }
+    },
+    "data_strategy": {
+      "type": "object",
+      "description": "Module 7 output — data and training infrastructure assessment. Required when core value depends on classification/scoring accuracy.",
+      "required": ["module_applicable"],
+      "properties": {
+        "module_applicable": { "type": "boolean" },
+        "reason": {
+          "type": "string",
+          "description": "Reason when module_applicable is false"
+        },
+        "existing_datasets": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["name", "size", "annotation_type", "license", "url", "relevance"],
+            "properties": {
+              "name": { "type": "string" },
+              "size": { "type": "string" },
+              "annotation_type": { "type": "string" },
+              "license": { "type": "string" },
+              "url": { "type": "string" },
+              "relevance": {
+                "type": "string",
+                "enum": ["direct", "adjacent", "partial"]
+              }
+            }
+          }
+        },
+        "pretrained_models": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["name", "accuracy", "training_data_size", "source", "license"],
+            "properties": {
+              "name": { "type": "string" },
+              "accuracy": { "type": "string" },
+              "training_data_size": { "type": "string" },
+              "source": { "type": "string" },
+              "license": { "type": "string" }
+            }
+          }
+        },
+        "validation_datasets": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["name", "description", "url"],
+            "properties": {
+              "name": { "type": "string" },
+              "description": { "type": "string" },
+              "url": { "type": "string" }
+            }
+          }
+        },
+        "data_acquisition_feasibility": {
+          "type": "string",
+          "enum": ["existing_sufficient", "augmentation_needed", "manual_collection_required", "infeasible"]
+        },
+        "architecture_implication": {
+          "type": "string",
+          "enum": ["rule_based_validated", "rule_based_unvalidated", "ml_trained", "hybrid"]
+        },
+        "summary": { "type": "string" }
+      },
+      "if": {
+        "properties": { "module_applicable": { "const": true } },
+        "required": ["module_applicable"]
+      },
+      "then": {
+        "required": ["module_applicable", "existing_datasets", "data_acquisition_feasibility", "architecture_implication", "summary"]
+      }
+    },
+    "unknowns": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "type": "string" }
+    },
+    "decision_card": {
+      "type": "string"
+    },
+    "recommendation": {
+      "type": "string",
+      "enum": ["COMMIT_TO_TRIAGE", "PARK", "KILL"]
+    },
+    "recommendation_rationale": {
+      "type": "string"
+    },
+    "self_check": {
+      "type": "object",
+      "required": [
+        "agent_badge",
+        "output_schema_valid",
+        "all_modules_completed",
+        "minimum_quotes_met",
+        "all_claims_cited",
+        "unknowns_listed",
+        "no_advocacy_language"
+      ],
+      "properties": {
+        "agent_badge": {
+          "type": "string",
+          "const": "[RESEARCH]"
+        },
+        "output_schema_valid": { "type": "boolean" },
+        "all_modules_completed": { "type": "boolean" },
+        "minimum_quotes_met": { "type": "boolean" },
+        "all_claims_cited": { "type": "boolean" },
+        "unknowns_listed": { "type": "boolean" },
+        "no_advocacy_language": { "type": "boolean" },
+        "value_chain_completed": { "type": "boolean" },
+        "value_chain_bottleneck_flagged": { "type": "boolean" }
+      }
+    }
+  }
+}

@@ -1,0 +1,1297 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>APOS Pipeline Dashboard</title>
+<style>
+  :root {
+    --bg: #0d1117;
+    --surface: #161b22;
+    --surface-hover: #1c2333;
+    --border: #30363d;
+    --text: #e6edf3;
+    --text-muted: #8b949e;
+    --accent: #58a6ff;
+    --green: #3fb950;
+    --yellow: #d29922;
+    --red: #f85149;
+    --orange: #db6d28;
+    --purple: #bc8cff;
+    --pink: #f778ba;
+    --radius: 8px;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'SF Pro', system-ui, sans-serif; background: var(--bg); color: var(--text); }
+
+  /* Header */
+  .header { padding: 16px 24px; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 16px; }
+  .header h1 { font-size: 18px; font-weight: 600; }
+  .header-stats { display: flex; gap: 16px; margin-left: auto; font-size: 13px; color: var(--text-muted); }
+  .stat { display: flex; align-items: center; gap: 5px; }
+  .stat .dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
+
+  /* Funnel bar */
+  .funnel-bar { display: flex; height: 36px; margin: 20px 24px 0; border-radius: var(--radius); overflow: hidden; border: 1px solid var(--border); }
+  .funnel-segment { display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 600; transition: flex 0.4s ease; cursor: default; position: relative; white-space: nowrap; min-width: 40px; }
+  .funnel-segment .count { font-size: 14px; margin-right: 4px; }
+  .funnel-segment:hover { filter: brightness(1.15); }
+  .seg-ideas { background: #1f3a5f; color: var(--accent); }
+  .seg-triage { background: #2d1f4e; color: var(--purple); }
+  .seg-validate { background: #2d3a1f; color: var(--yellow); }
+  .seg-build { background: #1a3327; color: var(--green); }
+  .seg-convert { background: #3a2a1a; color: var(--orange); }
+  .seg-design { background: #2d2a1f; color: var(--pink); }
+  .seg-killed { background: #2d1a1a; color: var(--red); }
+  .seg-parked { background: #1a1a1a; color: var(--text-muted); }
+
+  /* Pipeline lanes */
+  .pipeline { padding: 16px 24px; display: flex; gap: 12px; overflow-x: auto; align-items: flex-start; min-height: calc(100vh - 180px); }
+
+  /* Lane */
+  .lane { min-width: 260px; max-width: 300px; flex-shrink: 0; background: var(--surface); border-radius: var(--radius); border: 1px solid var(--border); display: flex; flex-direction: column; }
+  .lane-header { padding: 12px 14px; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 8px; }
+  .lane-icon { font-size: 16px; }
+  .lane-title { font-size: 14px; font-weight: 600; flex: 1; }
+  .lane-count { font-size: 12px; color: var(--text-muted); background: var(--bg); padding: 2px 8px; border-radius: 10px; }
+  .lane-body { padding: 6px; display: flex; flex-direction: column; gap: 5px; max-height: calc(100vh - 260px); overflow-y: auto; }
+  .lane-body::-webkit-scrollbar { width: 4px; }
+  .lane-body::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+  /* Sub-group headers within lanes */
+  .sub-header { font-size: 11px; color: var(--text-muted); padding: 6px 8px 2px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
+
+  /* Cards */
+  .card { background: var(--bg); border: 1px solid var(--border); border-radius: 6px; padding: 10px 12px; cursor: pointer; transition: all 0.15s ease; position: relative; }
+  .card:hover { border-color: var(--accent); background: var(--surface-hover); }
+
+  /* Idea cards */
+  .card-idea .card-title { font-size: 13px; font-weight: 500; margin-bottom: 4px; padding-right: 30px; }
+  .card-idea .card-oneliner { font-size: 11px; color: var(--text-muted); line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+  .card-idea .score-badge { position: absolute; top: 8px; right: 8px; width: 26px; height: 26px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; }
+  .score-5 { background: rgba(63,185,80,0.2); color: var(--green); border: 1px solid rgba(63,185,80,0.3); }
+  .score-4 { background: rgba(88,166,255,0.2); color: var(--accent); border: 1px solid rgba(88,166,255,0.3); }
+  .score-3 { background: rgba(210,153,34,0.2); color: var(--yellow); border: 1px solid rgba(210,153,34,0.3); }
+  .score-2 { background: rgba(139,148,158,0.15); color: var(--text-muted); border: 1px solid rgba(139,148,158,0.2); }
+  .card-idea .card-meta { display: flex; gap: 8px; margin-top: 6px; font-size: 10px; color: var(--text-muted); flex-wrap: wrap; }
+  .card-idea .tag { padding: 1px 6px; border-radius: 3px; background: rgba(139,148,158,0.1); }
+  .card-idea .tag-research { background: rgba(188,140,255,0.15); color: var(--purple); }
+  .card-idea .tag-clone { background: rgba(247,120,186,0.15); color: var(--pink); }
+
+  /* App cards */
+  .card-app { border-left: 3px solid var(--green); }
+  .card-app.stage-validate { border-left-color: var(--yellow); }
+  .card-app.stage-parked { border-left-color: var(--text-muted); opacity: 0.6; }
+  .card-app .card-title { font-size: 14px; font-weight: 600; margin-bottom: 4px; }
+  .card-app .card-subtitle { font-size: 11px; color: var(--text-muted); margin-bottom: 8px; }
+  .card-app .progress-bar { height: 4px; background: var(--border); border-radius: 2px; overflow: hidden; }
+  .card-app .progress-fill { height: 100%; border-radius: 2px; transition: width 0.3s; }
+  .card-app .progress-label { font-size: 10px; color: var(--text-muted); margin-top: 4px; display: flex; justify-content: space-between; }
+  .card-app .sprint-link { display: inline-flex; align-items: center; gap: 4px; font-size: 11px; color: var(--accent); margin-top: 6px; text-decoration: none; }
+  .card-app .sprint-link:hover { text-decoration: underline; }
+
+  /* Validation cards */
+  .card-validate { border-left: 3px solid var(--yellow); }
+  .card-validate .metric { display: flex; justify-content: space-between; font-size: 12px; margin-top: 4px; }
+  .card-validate .metric-value { font-weight: 600; }
+  .card-validate .day-indicator { display: flex; gap: 3px; margin-top: 8px; }
+  .card-validate .day-dot { width: 10px; height: 10px; border-radius: 50%; background: var(--border); }
+  .card-validate .day-dot.past { background: var(--green); }
+  .card-validate .day-dot.today { background: var(--yellow); border: 2px solid var(--text); }
+
+  /* Kill cards */
+  .card-killed { opacity: 0.5; }
+  .card-killed:hover { opacity: 0.8; }
+  .card-killed .kill-reason { font-size: 11px; color: var(--red); margin-top: 4px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+
+  /* Collapsed cards */
+  .card-collapsed { opacity: 0.4; }
+  .card-collapsed .collapse-note { font-size: 11px; color: var(--text-muted); margin-top: 4px; font-style: italic; }
+
+  /* Design cards */
+  .card-design { border-left: 3px solid var(--pink); }
+  .card-design .screen-grid { display: flex; gap: 4px; margin-top: 8px; flex-wrap: wrap; }
+  .card-design .screen-dot { width: 20px; height: 20px; border-radius: 4px; display: flex; align-items: center; justify-content: center; font-size: 8px; font-weight: 700; }
+  .screen-dot.approved { background: rgba(63,185,80,0.2); border: 1px solid rgba(63,185,80,0.3); color: var(--green); }
+  .screen-dot.iterating { background: rgba(210,153,34,0.2); border: 1px solid rgba(210,153,34,0.3); color: var(--yellow); }
+  .screen-dot.pending { background: rgba(139,148,158,0.1); border: 1px solid rgba(139,148,158,0.15); color: var(--text-muted); }
+  .screen-dot.deferred { background: rgba(139,148,158,0.05); border: 1px solid rgba(139,148,158,0.1); color: var(--text-muted); opacity: 0.5; }
+  .card-design .round-badge { font-size: 10px; padding: 2px 6px; border-radius: 3px; background: rgba(247,120,186,0.15); color: var(--pink); }
+  .card-design .design-link { display: inline-flex; align-items: center; gap: 4px; font-size: 11px; color: var(--pink); margin-top: 6px; text-decoration: none; }
+  .card-design .design-link:hover { text-decoration: underline; }
+
+  /* Expand/collapse for graveyard */
+  .graveyard-toggle { padding: 8px 12px; font-size: 12px; color: var(--text-muted); cursor: pointer; display: flex; align-items: center; gap: 6px; }
+  .graveyard-toggle:hover { color: var(--text); }
+  .graveyard-toggle .arrow { transition: transform 0.2s; }
+  .graveyard-toggle .arrow.open { transform: rotate(90deg); }
+  .graveyard-items { display: none; }
+  .graveyard-items.open { display: flex; flex-direction: column; gap: 5px; }
+
+  /* Card detail overlay */
+  .overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 200; display: none; align-items: center; justify-content: center; }
+  .overlay.show { display: flex; }
+  .detail-panel { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 24px; max-width: 560px; width: 90%; max-height: 80vh; overflow-y: auto; }
+  .detail-panel h2 { font-size: 18px; margin-bottom: 4px; }
+  .detail-panel .detail-oneliner { font-size: 13px; color: var(--text-muted); margin-bottom: 16px; line-height: 1.5; }
+  .detail-section { margin-bottom: 14px; }
+  .detail-section h4 { font-size: 12px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px; }
+  .detail-section p { font-size: 13px; line-height: 1.5; }
+  .detail-meta { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 16px; }
+  .detail-meta .meta-item { font-size: 12px; padding: 4px 10px; background: var(--bg); border-radius: 6px; border: 1px solid var(--border); }
+  .detail-close { position: absolute; top: 12px; right: 16px; background: none; border: none; color: var(--text-muted); font-size: 20px; cursor: pointer; }
+  .detail-close:hover { color: var(--text); }
+
+  /* Kill pattern summary */
+  .kill-patterns { margin: 0 24px 16px; padding: 12px 16px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); display: flex; gap: 20px; flex-wrap: wrap; }
+  .kill-pattern { font-size: 12px; color: var(--text-muted); }
+  .kill-pattern .pattern-count { color: var(--red); font-weight: 600; margin-right: 4px; }
+
+  /* ── Research & Triage Indicators ── */
+
+  /* Research pills on cards */
+  .research-row { display: flex; gap: 5px; margin-top: 6px; flex-wrap: wrap; }
+  .research-pill { font-size: 10px; padding: 2px 6px; border-radius: 3px; font-weight: 500; display: inline-flex; align-items: center; gap: 3px; }
+  .pill-growing { background: rgba(63,185,80,0.12); color: var(--green); }
+  .pill-stable { background: rgba(210,153,34,0.12); color: var(--yellow); }
+  .pill-declining { background: rgba(248,81,73,0.12); color: var(--red); }
+  .pill-emerging { background: rgba(63,185,80,0.12); color: var(--green); }
+  .pill-blue-ocean { background: rgba(88,166,255,0.12); color: var(--accent); }
+  .pill-red-ocean { background: rgba(248,81,73,0.12); color: var(--red); }
+  .pill-deliverable { background: rgba(63,185,80,0.12); color: var(--green); }
+  .pill-constrained { background: rgba(210,153,34,0.12); color: var(--yellow); }
+  .pill-risky { background: rgba(248,81,73,0.12); color: var(--red); }
+
+  /* Triage indicators on cards */
+  .triage-row { display: flex; align-items: center; gap: 6px; margin-top: 6px; }
+  .concession-badge { font-size: 10px; padding: 2px 6px; border-radius: 3px; font-weight: 600; }
+  .concession-0 { background: rgba(63,185,80,0.12); color: var(--green); }
+  .concession-1 { background: rgba(210,153,34,0.12); color: var(--yellow); }
+  .concession-2 { background: rgba(248,81,73,0.12); color: var(--red); }
+  .check-dots { display: flex; gap: 3px; align-items: center; }
+  .check-dot { width: 8px; height: 8px; border-radius: 50%; }
+  .check-dot.pass { background: var(--green); }
+  .check-dot.fail { background: var(--red); }
+  .check-dot.unknown { background: var(--border); }
+  .reco-pill { font-size: 9px; padding: 1px 5px; border-radius: 3px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.3px; }
+  .reco-promote { background: rgba(63,185,80,0.15); color: var(--green); }
+  .reco-kill { background: rgba(248,81,73,0.15); color: var(--red); }
+  .reco-defer { background: rgba(139,148,158,0.15); color: var(--text-muted); }
+  .reco-pivot { background: rgba(210,153,34,0.15); color: var(--yellow); }
+  .reco-rp { background: rgba(188,140,255,0.15); color: var(--purple); }
+
+  /* ── Detail overlay: Research section ── */
+  .detail-research { margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--border); }
+  .detail-research h3 { font-size: 14px; font-weight: 600; margin-bottom: 12px; }
+  .research-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px; }
+  .research-cell { background: var(--bg); border: 1px solid var(--border); border-radius: 6px; padding: 10px 12px; }
+  .research-cell h5 { font-size: 10px; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-muted); margin-bottom: 4px; }
+  .research-cell .cell-value { font-size: 13px; line-height: 1.4; }
+  .research-cell .cell-value.large { font-size: 16px; font-weight: 600; }
+  .competitor-list { list-style: none; padding: 0; }
+  .competitor-list li { display: flex; align-items: center; gap: 8px; padding: 4px 0; font-size: 12px; border-bottom: 1px solid rgba(48,54,61,0.5); }
+  .competitor-list li:last-child { border-bottom: none; }
+  .competitor-list .comp-name { font-weight: 500; flex: 1; }
+  .competitor-list .comp-gap { font-size: 10px; padding: 1px 5px; border-radius: 3px; }
+  .gap-structural { background: rgba(63,185,80,0.12); color: var(--green); }
+  .gap-temporal { background: rgba(210,153,34,0.12); color: var(--yellow); }
+  .gap-cosmetic { background: rgba(248,81,73,0.12); color: var(--red); }
+
+  /* ── Detail overlay: Triage Decision Trail ── */
+  .detail-triage { margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--border); }
+  .detail-triage h3 { font-size: 14px; font-weight: 600; margin-bottom: 12px; }
+  .triage-headline { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; flex-wrap: wrap; }
+  .triage-headline .reco-large { font-size: 14px; padding: 4px 10px; border-radius: 6px; font-weight: 700; }
+  .triage-checks-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 16px; }
+  .check-cell { background: var(--bg); border: 1px solid var(--border); border-radius: 6px; padding: 8px 10px; display: flex; align-items: flex-start; gap: 8px; }
+  .check-cell .check-icon { font-size: 14px; flex-shrink: 0; margin-top: 1px; }
+  .check-cell .check-label { font-size: 11px; color: var(--text-muted); }
+  .check-cell .check-detail { font-size: 11px; color: var(--text); margin-top: 2px; }
+  .kill-brief-section { margin-bottom: 16px; }
+  .kill-brief-toggle { font-size: 12px; color: var(--text-muted); cursor: pointer; display: flex; align-items: center; gap: 6px; margin-bottom: 6px; }
+  .kill-brief-toggle:hover { color: var(--text); }
+  .kill-brief-text { font-size: 12px; line-height: 1.5; color: var(--text-muted); display: none; padding: 8px 12px; background: var(--bg); border-radius: 6px; border: 1px solid var(--border); }
+  .kill-brief-text.open { display: block; }
+  .prosecution-list { display: flex; flex-direction: column; gap: 8px; }
+  .prosecution-item { border-left: 3px solid var(--border); padding: 8px 12px; background: var(--bg); border-radius: 0 6px 6px 0; }
+  .prosecution-item.refuted { border-left-color: var(--green); }
+  .prosecution-item.conceded { border-left-color: var(--red); }
+  .prosecution-item .pp-point { font-size: 12px; font-weight: 500; margin-bottom: 4px; }
+  .prosecution-item .pp-badge { font-size: 10px; padding: 1px 6px; border-radius: 3px; font-weight: 600; display: inline-block; margin-bottom: 4px; }
+  .prosecution-item .pp-badge.refuted { background: rgba(63,185,80,0.12); color: var(--green); }
+  .prosecution-item .pp-badge.conceded { background: rgba(248,81,73,0.12); color: var(--red); }
+  .prosecution-item .pp-evidence { font-size: 11px; color: var(--text-muted); line-height: 1.4; }
+
+  /* ── Comparison View ── */
+  .compare-container { display: none; padding: 16px 24px; }
+  .compare-container.show { display: block; }
+  .compare-header { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
+  .compare-header h2 { font-size: 16px; font-weight: 600; }
+  .compare-header .compare-count { font-size: 12px; color: var(--text-muted); }
+
+  /* Selector bar */
+  .compare-selector { margin-bottom: 20px; }
+  .compare-selector-controls { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
+  .compare-selector-controls button { background: transparent; border: 1px solid var(--border); color: var(--text-muted); font-size: 11px; padding: 4px 10px; border-radius: 6px; cursor: pointer; transition: all 0.15s; }
+  .compare-selector-controls button:hover { color: var(--text); border-color: var(--text-muted); }
+  .compare-selector-label { font-size: 11px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.4px; font-weight: 600; }
+  .compare-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+  .compare-chip { display: flex; align-items: center; gap: 6px; padding: 5px 10px; border-radius: 8px; border: 1px solid var(--border); background: transparent; color: var(--text-muted); font-size: 12px; cursor: pointer; transition: all 0.15s; user-select: none; }
+  .compare-chip:hover { border-color: var(--text-muted); color: var(--text); }
+  .compare-chip.selected { background: rgba(88,166,255,0.1); border-color: var(--accent); color: var(--text); }
+  .compare-chip .chip-score { width: 20px; height: 20px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 700; flex-shrink: 0; }
+  .compare-chip .chip-remove { display: none; font-size: 14px; line-height: 1; opacity: 0.5; margin-left: 2px; }
+  .compare-chip.selected .chip-remove { display: inline; }
+  .compare-chip.selected .chip-remove:hover { opacity: 1; }
+
+  /* Comparison cards (vertical layout) */
+  .compare-cards { display: flex; flex-direction: column; gap: 12px; }
+  .compare-card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 16px; transition: border-color 0.15s; }
+  .compare-card:hover { border-color: rgba(88,166,255,0.3); }
+  .compare-card-header { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; cursor: pointer; }
+  .compare-card-header h3 { font-size: 14px; font-weight: 600; margin: 0; flex: 1; }
+  .compare-card-header h3:hover { color: var(--accent); }
+  .compare-card-oneliner { font-size: 12px; color: var(--text-muted); margin-bottom: 12px; line-height: 1.4; }
+  .compare-card-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 1px; background: rgba(48,54,61,0.3); border-radius: 8px; overflow: hidden; }
+  .compare-card-cell { background: var(--bg); padding: 10px 12px; }
+  .compare-card-cell h5 { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.4px; color: var(--text-muted); margin: 0 0 4px 0; }
+  .compare-card-cell .cell-value { font-size: 12px; }
+  .compare-card-sections { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 12px; }
+  @media (max-width: 700px) { .compare-card-sections { grid-template-columns: 1fr; } }
+  .compare-section-block { background: rgba(22,27,34,0.5); border-radius: 8px; padding: 12px; }
+  .compare-section-block h4 { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-muted); margin: 0 0 8px 0; }
+  .compare-section-block .mini-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .compare-section-block .mini-cell h5 { font-size: 10px; font-weight: 600; color: var(--text-muted); margin: 0 0 2px 0; }
+  .compare-section-block .mini-cell .val { font-size: 12px; }
+  .compare-card .cell-na { color: var(--text-muted); font-style: italic; font-size: 11px; }
+  .compare-empty { padding: 60px; text-align: center; color: var(--text-muted); font-size: 13px; }
+  .nav-active { color: var(--accent) !important; background: rgba(88,166,255,0.1) !important; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div style="display:flex;gap:4px">
+    <a href="#" id="pipelineNav" onclick="showView('pipeline');return false" class="nav-active" style="text-decoration:none;font-size:13px;padding:4px 10px;border-radius:6px;">Pipeline</a>
+    <a href="#" id="compareNav" onclick="showView('compare');return false" style="color:var(--text-muted);text-decoration:none;font-size:13px;padding:4px 10px;border-radius:6px;">Compare</a>
+    <a href="#" id="sprintLink" style="color:var(--text-muted);text-decoration:none;font-size:13px;padding:4px 10px;border-radius:6px;">Sprint</a>
+    <a href="#" id="lineageLink" style="color:var(--text-muted);text-decoration:none;font-size:13px;padding:4px 10px;border-radius:6px;">Lineage</a>
+    <a href="#" id="metricsLink" style="color:var(--text-muted);text-decoration:none;font-size:13px;padding:4px 10px;border-radius:6px;">Metrics</a>
+    <a href="#" id="decisionsLink" style="color:var(--text-muted);text-decoration:none;font-size:13px;padding:4px 10px;border-radius:6px;">Decisions</a>
+  </div>
+  <h1>APOS Pipeline</h1>
+  <div class="header-stats" id="headerStats"></div>
+</div>
+
+<div class="funnel-bar" id="funnelBar"></div>
+
+<div id="killPatterns" class="kill-patterns" style="display:none"></div>
+
+<div class="pipeline" id="pipeline"></div>
+
+<div class="compare-container" id="compareView"></div>
+
+<div class="overlay" id="overlay" onclick="if(event.target===this)closeDetail()">
+  <div class="detail-panel" id="detailPanel"></div>
+</div>
+
+<script>
+function escapeHTML(str) {
+  if (str == null) return '';
+  return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+}
+
+// ── State ──
+let data = null; // { state, ideas, apps }
+let currentView = 'pipeline';
+
+async function init() {
+  data = await (await fetch('/api/pipeline')).json();
+  // Set nav links to active app
+  const slug = data.state?.active_app_slug || 'boxingai';
+  document.getElementById('sprintLink').href = `/sprint/${slug}`;
+  document.getElementById('lineageLink').href = `/lineage/${slug}`;
+  document.getElementById('metricsLink').href = `/metrics/${slug}`;
+  document.getElementById('decisionsLink').href = `/decisions/${slug}`;
+  renderFunnel();
+  renderPipeline();
+}
+
+function showView(view) {
+  currentView = view;
+  const pipelineEl = document.getElementById('pipeline');
+  const funnelEl = document.getElementById('funnelBar');
+  const killEl = document.getElementById('killPatterns');
+  const compareEl = document.getElementById('compareView');
+  const pipelineNav = document.getElementById('pipelineNav');
+  const compareNav = document.getElementById('compareNav');
+
+  if (view === 'compare') {
+    pipelineEl.style.display = 'none';
+    funnelEl.style.display = 'none';
+    killEl.style.display = 'none';
+    compareEl.classList.add('show');
+    pipelineNav.classList.remove('nav-active');
+    pipelineNav.style.color = 'var(--text-muted)';
+    compareNav.classList.add('nav-active');
+    compareNav.style.color = '';
+    renderComparison();
+  } else {
+    pipelineEl.style.display = '';
+    funnelEl.style.display = '';
+    compareEl.classList.remove('show');
+    pipelineNav.classList.add('nav-active');
+    pipelineNav.style.color = '';
+    compareNav.classList.remove('nav-active');
+    compareNav.style.color = 'var(--text-muted)';
+    renderFunnel();
+  }
+}
+
+// ── Funnel Bar ──
+function renderFunnel() {
+  const ideas = data.ideas || [];
+  const apps = Object.values(data.apps);
+
+  const counts = {
+    pool: ideas.filter(i => ['new','researched','cloned'].includes(i.status)).length,
+    triage: ideas.filter(i => i.status === 'triaged').length,
+    validate: ideas.filter(i => i.status === 'validating').length + apps.filter(a => a.registry.current_stage === 'validate').length,
+    design: apps.filter(a => a.registry.current_stage === 'design' || a.registry.current_stage === 'design_frozen' || a.appState?.pipeline?.design_progress?.status).length,
+    build: apps.filter(a => a.registry.current_stage === 'build').length,
+    convert: apps.filter(a => a.registry.current_stage === 'convert').length,
+    killed: ideas.filter(i => i.status === 'killed').length,
+    parked: ideas.filter(i => i.status === 'collapsed').length + apps.filter(a => a.registry.current_stage === 'parked').length,
+  };
+
+  const total = Object.values(counts).reduce((a, b) => a + b, 0) || 1;
+  const bar = document.getElementById('funnelBar');
+  const segments = [
+    { key: 'pool', label: 'Idea Pool', cls: 'seg-ideas' },
+    { key: 'triage', label: 'Triaged', cls: 'seg-triage' },
+    { key: 'validate', label: 'Validate', cls: 'seg-validate' },
+    { key: 'design', label: 'Design', cls: 'seg-design' },
+    { key: 'build', label: 'Build', cls: 'seg-build' },
+    { key: 'convert', label: 'Convert', cls: 'seg-convert' },
+    { key: 'killed', label: 'Killed', cls: 'seg-killed' },
+    { key: 'parked', label: 'Parked', cls: 'seg-parked' },
+  ];
+
+  bar.innerHTML = segments
+    .filter(s => counts[s.key] > 0)
+    .map(s => {
+      const pct = Math.max((counts[s.key] / total) * 100, 8);
+      return `<div class="funnel-segment ${s.cls}" style="flex:${pct}" title="${s.label}: ${counts[s.key]}">
+        <span class="count">${counts[s.key]}</span> ${s.label}
+      </div>`;
+    }).join('');
+
+  // Header stats
+  document.getElementById('headerStats').innerHTML = `
+    <div class="stat">${ideas.length} ideas total</div>
+    <div class="stat"><span class="dot" style="background:var(--green)"></span> ${counts.build} building</div>
+    <div class="stat"><span class="dot" style="background:var(--yellow)"></span> ${counts.validate} validating</div>
+    <div class="stat"><span class="dot" style="background:var(--red)"></span> ${counts.killed} killed</div>
+  `;
+
+  // Kill patterns
+  renderKillPatterns();
+}
+
+function renderKillPatterns() {
+  const killed = (data.ideas || []).filter(i => i.status === 'killed' && i.kill_reason);
+  if (killed.length === 0) return;
+
+  // Extract patterns from kill reasons
+  const patterns = {};
+  const keywords = {
+    'saturated': 'Market Saturated',
+    'no api': 'No API Access',
+    'api': 'API Dependency',
+    'incumbent': 'Strong Incumbent',
+    'cosmetic': 'Cosmetic Gap Only',
+    'regulatory': 'Regulatory Risk',
+    'concession': 'Too Many Concessions',
+    'deliverable': 'Technically Undeliverable',
+    'shrinking': 'Shrinking TAM',
+    'free': 'Free Incumbent',
+    'building the same': 'Platform Building It',
+  };
+
+  for (const idea of killed) {
+    const reason = (idea.kill_reason || '').toLowerCase();
+    for (const [kw, label] of Object.entries(keywords)) {
+      if (reason.includes(kw)) {
+        patterns[label] = (patterns[label] || 0) + 1;
+      }
+    }
+  }
+
+  const el = document.getElementById('killPatterns');
+  const sorted = Object.entries(patterns).sort((a, b) => b[1] - a[1]);
+  if (sorted.length === 0) { el.style.display = 'none'; return; }
+
+  el.style.display = 'flex';
+  el.innerHTML = `<span style="font-size:12px;font-weight:600;color:var(--text-muted)">Kill patterns:</span>` +
+    sorted.map(([label, count]) =>
+      `<div class="kill-pattern"><span class="pattern-count">${count}x</span>${label}</div>`
+    ).join('');
+}
+
+// ── Pipeline Lanes ──
+function renderPipeline() {
+  const pipeline = document.getElementById('pipeline');
+  pipeline.innerHTML = '';
+
+  const ideas = data.ideas || [];
+  const apps = Object.values(data.apps);
+
+  // Lane 1: Idea Pool (new + researched)
+  const poolIdeas = ideas
+    .filter(i => ['new', 'researched', 'cloned'].includes(i.status))
+    .sort((a, b) => (b.score || 0) - (a.score || 0));
+  pipeline.appendChild(createIdeaLane('Idea Pool', poolIdeas, 'ideas'));
+
+  // Lane 2: Triaged (awaiting promotion)
+  const triagedIdeas = ideas
+    .filter(i => i.status === 'triaged' || i.status === 'promoted')
+    .sort((a, b) => (b.score || 0) - (a.score || 0));
+  pipeline.appendChild(createIdeaLane('Triaged', triagedIdeas, 'triage'));
+
+  // Lane 3: Validate
+  const validateApps = apps.filter(a => a.registry.current_stage === 'validate');
+  const validatingIdeas = ideas.filter(i => i.status === 'validating');
+  pipeline.appendChild(createValidateLane(validateApps, validatingIdeas));
+
+  // Lane 4: Design
+  const designApps = apps.filter(a =>
+    a.registry.current_stage === 'design' ||
+    a.registry.current_stage === 'design_frozen' ||
+    a.appState?.pipeline?.design_progress?.status
+  );
+  // Also show build apps that have design_progress (completed design stage)
+  const buildAppsWithDesign = apps.filter(a =>
+    a.registry.current_stage === 'build' && a.appState?.pipeline?.design_progress?.screens?.length > 0
+  );
+  pipeline.appendChild(createDesignLane([...designApps, ...buildAppsWithDesign]));
+
+  // Lane 5: Build
+  const buildApps = apps.filter(a => a.registry.current_stage === 'build');
+  pipeline.appendChild(createBuildLane(buildApps));
+
+  // Lane 5: Graveyard (killed + collapsed + parked)
+  const killedIdeas = ideas.filter(i => i.status === 'killed').sort((a, b) => (b.score || 0) - (a.score || 0));
+  const collapsedIdeas = ideas.filter(i => i.status === 'collapsed');
+  const parkedApps = apps.filter(a => a.registry.current_stage === 'parked');
+  pipeline.appendChild(createGraveyardLane(killedIdeas, collapsedIdeas, parkedApps));
+}
+
+function createIdeaLane(title, ideas, type) {
+  const lane = document.createElement('div');
+  lane.className = 'lane';
+  lane.innerHTML = `
+    <div class="lane-header">
+      <span class="lane-title">${title}</span>
+      <span class="lane-count">${ideas.length}</span>
+    </div>
+  `;
+  const body = document.createElement('div');
+  body.className = 'lane-body';
+
+  if (type === 'ideas') {
+    // Sub-group: researched first, then new
+    const researched = ideas.filter(i => i.status === 'researched' || i.status === 'cloned');
+    const fresh = ideas.filter(i => i.status === 'new');
+
+    if (researched.length > 0) {
+      body.innerHTML += `<div class="sub-header">Researched / Cloned</div>`;
+      for (const idea of researched) body.appendChild(createIdeaCard(idea));
+    }
+    if (fresh.length > 0) {
+      body.innerHTML += `<div class="sub-header">New (unresearched)</div>`;
+      for (const idea of fresh) body.appendChild(createIdeaCard(idea));
+    }
+  } else {
+    for (const idea of ideas) body.appendChild(createIdeaCard(idea));
+  }
+
+  if (ideas.length === 0) {
+    body.innerHTML = `<div style="padding:16px;text-align:center;color:var(--text-muted);font-size:12px">No ideas at this stage</div>`;
+  }
+
+  lane.appendChild(body);
+  return lane;
+}
+
+function createIdeaCard(idea) {
+  const card = document.createElement('div');
+  const score = idea.score || 0;
+  const scoreClass = score >= 5 ? 'score-5' : score >= 4 ? 'score-4' : score >= 3 ? 'score-3' : 'score-2';
+
+  card.className = 'card card-idea';
+  card.onclick = () => showIdeaDetail(idea);
+
+  let tags = '';
+  if (idea.estimated_complexity) tags += `<span class="tag">${escapeHTML(idea.estimated_complexity)}</span>`;
+  if (idea.status === 'researched' && !idea.research_summary) tags += `<span class="tag tag-research">researched</span>`;
+  if (idea.status === 'cloned') tags += `<span class="tag tag-clone">cloned</span>`;
+  if (idea.owner_proximity) tags += `<span class="tag">${escapeHTML(idea.owner_proximity.replace('_',' '))}</span>`;
+  if (idea.trend_coupling) tags += `<span class="tag" style="color:var(--green)">${escapeHTML(idea.trend_coupling)}</span>`;
+  const signalCount = (idea.signal_sources || []).length;
+
+  // Research indicators
+  let researchHTML = '';
+  const rs = idea.research_summary;
+  if (rs) {
+    const trendMap = { growing: { cls: 'pill-growing', icon: '↑' }, stable: { cls: 'pill-stable', icon: '→' }, declining: { cls: 'pill-declining', icon: '↓' } };
+    const trend = trendMap[rs.market_trend];
+    const delivMap = { fully_deliverable: { cls: 'pill-deliverable', label: 'Deliverable' }, deliverable_with_constraints: { cls: 'pill-constrained', label: 'Constrained' }, structurally_risky: { cls: 'pill-risky', label: 'Risky' }, undeliverable: { cls: 'pill-risky', label: 'Undeliverable' } };
+    const deliv = delivMap[rs.value_chain_deliverability];
+
+    researchHTML = '<div class="research-row">';
+    if (trend) researchHTML += `<span class="research-pill ${trend.cls}">${trend.icon} ${escapeHTML(rs.market_trend)}</span>`;
+    if (rs.competitive_landscape) {
+      const lsMap = { emerging: 'pill-emerging', blue_ocean: 'pill-blue-ocean', red_ocean: 'pill-red-ocean' };
+      researchHTML += `<span class="research-pill ${lsMap[rs.competitive_landscape] || ''}">${escapeHTML(rs.competitive_landscape.replace('_', ' '))}</span>`;
+    }
+    if (deliv) researchHTML += `<span class="research-pill ${deliv.cls}">${deliv.label}</span>`;
+    researchHTML += '</div>';
+  }
+
+  // Triage indicators
+  let triageHTML = '';
+  const ts = idea.triage_summary;
+  if (ts) {
+    const cc = ts.concession_count ?? -1;
+    const ccCls = cc === 0 ? 'concession-0' : cc === 1 ? 'concession-1' : 'concession-2';
+    const checks = ts.checks || {};
+    const dotHTML = ['value_hypothesis', 'market_demand', 'competitor_gap', 'unit_economics'].map(k => {
+      const p = checks[k]?.passed;
+      const cls = p === true ? 'pass' : p === false ? 'fail' : 'unknown';
+      const labels = { value_hypothesis: 'Value', market_demand: 'Market', competitor_gap: 'Gap', unit_economics: 'Economics' };
+      return `<span class="check-dot ${cls}" title="${labels[k]}: ${p === true ? 'Passed' : p === false ? 'Failed' : '?'}"></span>`;
+    }).join('');
+
+    const recoMap = {
+      'PROMOTE_TO_VALIDATE': { cls: 'reco-promote', label: 'Promote' },
+      'PROMOTE_TO_RAPID_PROTOTYPE': { cls: 'reco-rp', label: 'RP' },
+      'KILL': { cls: 'reco-kill', label: 'Kill' },
+      'DEFER': { cls: 'reco-defer', label: 'Defer' },
+      'PIVOT': { cls: 'reco-pivot', label: 'Pivot' },
+    };
+    const reco = recoMap[ts.recommendation] || { cls: 'reco-defer', label: ts.recommendation || '' };
+
+    triageHTML = `<div class="triage-row">`;
+    if (cc >= 0) triageHTML += `<span class="concession-badge ${ccCls}">${cc} concession${cc !== 1 ? 's' : ''}</span>`;
+    triageHTML += `<div class="check-dots">${dotHTML}</div>`;
+    triageHTML += `<span class="reco-pill ${reco.cls}">${escapeHTML(reco.label)}</span>`;
+    triageHTML += `</div>`;
+  }
+
+  card.innerHTML = `
+    <div class="score-badge ${scoreClass}">${score}</div>
+    <div class="card-title">${escapeHTML(idea.title)}</div>
+    <div class="card-oneliner">${escapeHTML(idea.one_liner || '')}</div>
+    <div class="card-meta">
+      ${signalCount > 0 ? `<span class="tag">${signalCount} signals</span>` : ''}
+      ${tags}
+    </div>
+    ${researchHTML}
+    ${triageHTML}
+  `;
+  return card;
+}
+
+function createValidateLane(apps, validatingIdeas) {
+  const lane = document.createElement('div');
+  const count = apps.length + validatingIdeas.length;
+  lane.className = 'lane';
+  lane.innerHTML = `
+    <div class="lane-header">
+      <span class="lane-title">Validate</span>
+      <span class="lane-count">${count}</span>
+    </div>
+  `;
+  const body = document.createElement('div');
+  body.className = 'lane-body';
+
+  // Active validation from state.json
+  const av = data.state?.active_validation;
+  if (av) {
+    const card = document.createElement('div');
+    card.className = 'card card-validate';
+    const day = av.day || 1;
+    const signups = av.quantitative?.signups || 0;
+    const target = av.quantitative?.signup_target || 30;
+    const rate = av.quantitative?.signup_conversion_rate || 0;
+    const views = av.quantitative?.page_views || 0;
+    const tier = av.current_tier || 1;
+
+    let dayDots = '';
+    for (let d = 1; d <= 7; d++) {
+      const cls = d < day ? 'past' : d === day ? 'today' : '';
+      dayDots += `<div class="day-dot ${cls}"></div>`;
+    }
+
+    card.innerHTML = `
+      <div class="card-title">${escapeHTML(av.idea_title)}</div>
+      <div class="day-indicator">${dayDots}</div>
+      <div class="metric"><span>Signups</span><span class="metric-value">${signups} / ${target}</span></div>
+      <div class="metric"><span>Page Views</span><span class="metric-value">${views}</span></div>
+      <div class="metric"><span>Conversion</span><span class="metric-value">${(rate * 100).toFixed(1)}%</span></div>
+      <div class="metric"><span>Tier</span><span class="metric-value">${tier}</span></div>
+    `;
+    body.appendChild(card);
+  }
+
+  // Apps in validate stage
+  for (const app of apps) {
+    if (av && av.idea_slug === app.registry.slug) continue; // already shown above
+    const card = document.createElement('div');
+    card.className = 'card card-app stage-validate';
+    card.innerHTML = `
+      <div class="card-title">${escapeHTML(app.registry.name)}</div>
+      <div class="card-subtitle">${escapeHTML(app.registry.app_category?.replace('_', ' / ') || 'Validating')}</div>
+    `;
+    body.appendChild(card);
+  }
+
+  if (count === 0) {
+    body.innerHTML = `<div style="padding:16px;text-align:center;color:var(--text-muted);font-size:12px">Nothing validating</div>`;
+  }
+
+  lane.appendChild(body);
+  return lane;
+}
+
+function createBuildLane(apps) {
+  const lane = document.createElement('div');
+  lane.className = 'lane';
+  lane.innerHTML = `
+    <div class="lane-header">
+      <span class="lane-title">Build</span>
+      <span class="lane-count">${apps.length}</span>
+    </div>
+  `;
+  const body = document.createElement('div');
+  body.className = 'lane-body';
+
+  for (const app of apps) {
+    const as = app.appState;
+    const wb = as?.pipeline?.wip_build;
+    const card = document.createElement('div');
+    card.className = 'card card-app';
+
+    let progressHTML = '';
+    let subtitleText = '';
+    let sprintInfo = '';
+
+    if (wb) {
+      const specsTotal = wb.specs_total || 0;
+      const specsCompleted = wb.specs_completed || 0;
+      const pct = specsTotal > 0 ? (specsCompleted / specsTotal * 100) : 0;
+      const phase = wb.phase || 1;
+      const sprint = wb.current_sprint || 1;
+      const phaseName = wb.phase_name || `Phase ${phase}`;
+
+      subtitleText = `${escapeHTML(phaseName)} — Sprint ${sprint}`;
+
+      const totalBP = (wb.build_progress || []).length;
+      const passedBP = (wb.build_progress || []).filter(p => p.review_passed).length;
+
+      progressHTML = `
+        <div class="progress-bar"><div class="progress-fill" style="width:${pct}%;background:var(--green)"></div></div>
+        <div class="progress-label">
+          <span>${specsCompleted}/${specsTotal} specs</span>
+          <span>${passedBP} reviewed</span>
+        </div>
+      `;
+
+      sprintInfo = `<a class="sprint-link" href="/sprint/${app.registry.slug}">View sprint board &rarr;</a>`;
+    } else {
+      subtitleText = as?.pipeline?.current_stage || 'build';
+    }
+
+    card.innerHTML = `
+      <div class="card-title">${escapeHTML(app.registry.name)}</div>
+      <div class="card-subtitle">${escapeHTML(subtitleText)}</div>
+      ${progressHTML}
+      ${sprintInfo}
+    `;
+
+    card.querySelector('.sprint-link')?.addEventListener('click', e => e.stopPropagation());
+    body.appendChild(card);
+  }
+
+  if (apps.length === 0) {
+    body.innerHTML = `<div style="padding:16px;text-align:center;color:var(--text-muted);font-size:12px">Nothing building</div>`;
+  }
+
+  lane.appendChild(body);
+  return lane;
+}
+
+function createDesignLane(apps) {
+  const lane = document.createElement('div');
+  lane.className = 'lane';
+  lane.innerHTML = `
+    <div class="lane-header">
+      <span class="lane-title">Design</span>
+      <span class="lane-count">${apps.length}</span>
+    </div>
+  `;
+  const body = document.createElement('div');
+  body.className = 'lane-body';
+
+  for (const app of apps) {
+    const dp = app.appState?.pipeline?.design_progress;
+    const card = document.createElement('div');
+    card.className = 'card card-design';
+
+    if (!dp) {
+      // App is in design stage but hasn't started yet
+      const stage = app.registry.current_stage;
+      card.innerHTML = `
+        <div class="card-title">${escapeHTML(app.registry.name)}</div>
+        <div class="card-subtitle" style="font-size:11px;color:var(--text-muted);margin-top:4px">
+          ${stage === 'design' ? 'Awaiting design start' : stage === 'build' ? 'No design iteration' : escapeHTML(stage)}
+        </div>
+      `;
+    } else {
+      const screens = dp.screens || [];
+      const approved = screens.filter(s => s.status === 'approved').length;
+      const iterating = screens.filter(s => s.status === 'iterating' || s.status === 'pending').length;
+      const deferred = screens.filter(s => s.status === 'deferred').length;
+      const total = dp.screens_total || screens.length;
+      const round = dp.iteration_rounds || (dp.feedback_log || []).length || 0;
+      const maxRounds = dp.max_rounds || 3;
+      const frozen = dp.status === 'frozen';
+
+      let screenDots = '';
+      for (const scr of screens.slice(0, 16)) {
+        const cls = scr.status === 'approved' ? 'approved' : scr.status === 'deferred' ? 'deferred' : scr.status === 'iterating' ? 'iterating' : 'pending';
+        const initial = (scr.name || '')[0]?.toUpperCase() || '?';
+        screenDots += `<div class="screen-dot ${cls}" title="${escapeHTML(scr.name || scr.id)}: ${escapeHTML(scr.status)}">${escapeHTML(initial)}</div>`;
+      }
+      if (screens.length > 16) {
+        screenDots += `<div class="screen-dot pending" title="${screens.length - 16} more">+${screens.length - 16}</div>`;
+      }
+
+      card.innerHTML = `
+        <div style="display:flex;align-items:center;gap:8px">
+          <div class="card-title" style="flex:1">${escapeHTML(app.registry.name)}</div>
+          ${frozen ? '<span style="font-size:10px;padding:2px 6px;border-radius:3px;background:rgba(63,185,80,0.15);color:var(--green)">Frozen</span>' :
+            `<span class="round-badge">Round ${round}/${maxRounds}</span>`}
+        </div>
+        <div style="font-size:11px;color:var(--text-muted);margin-top:4px">${approved}/${total} screens approved${deferred > 0 ? `, ${deferred} deferred` : ''}</div>
+        <div class="screen-grid">${screenDots}</div>
+        ${frozen && app.registry.current_stage === 'build' ?
+          `<a class="design-link" href="/sprint/${app.registry.slug}">View sprint board &rarr;</a>` : ''}
+      `;
+    }
+
+    body.appendChild(card);
+  }
+
+  if (apps.length === 0) {
+    body.innerHTML = `<div style="padding:16px;text-align:center;color:var(--text-muted);font-size:12px">No apps in design</div>`;
+  }
+
+  lane.appendChild(body);
+  return lane;
+}
+
+function createGraveyardLane(killed, collapsed, parkedApps) {
+  const lane = document.createElement('div');
+  const total = killed.length + collapsed.length + parkedApps.length;
+  lane.className = 'lane';
+  lane.innerHTML = `
+    <div class="lane-header">
+      <span class="lane-title">Graveyard</span>
+      <span class="lane-count">${total}</span>
+    </div>
+  `;
+  const body = document.createElement('div');
+  body.className = 'lane-body';
+
+  // Parked apps
+  for (const app of parkedApps) {
+    const card = document.createElement('div');
+    card.className = 'card card-app stage-parked';
+    card.innerHTML = `
+      <div class="card-title">${escapeHTML(app.registry.name)}</div>
+      <div class="card-subtitle" style="font-style:italic">Parked</div>
+    `;
+    body.appendChild(card);
+  }
+
+  // Killed ideas — collapsible
+  if (killed.length > 0) {
+    const toggle = document.createElement('div');
+    toggle.className = 'graveyard-toggle';
+    toggle.innerHTML = `<span class="arrow">&#9654;</span> ${killed.length} killed ideas`;
+    const items = document.createElement('div');
+    items.className = 'graveyard-items';
+
+    toggle.onclick = () => {
+      items.classList.toggle('open');
+      toggle.querySelector('.arrow').classList.toggle('open');
+    };
+
+    for (const idea of killed) {
+      const card = document.createElement('div');
+      card.className = 'card card-idea card-killed';
+      card.onclick = () => showIdeaDetail(idea);
+      const score = idea.score || 0;
+      const scoreClass = score >= 5 ? 'score-5' : score >= 4 ? 'score-4' : score >= 3 ? 'score-3' : 'score-2';
+      card.innerHTML = `
+        <div class="score-badge ${scoreClass}">${score}</div>
+        <div class="card-title">${escapeHTML(idea.title)}</div>
+        <div class="kill-reason">${escapeHTML(idea.kill_reason || 'No reason recorded')}</div>
+      `;
+      items.appendChild(card);
+    }
+
+    body.appendChild(toggle);
+    body.appendChild(items);
+  }
+
+  // Collapsed
+  if (collapsed.length > 0) {
+    const toggle = document.createElement('div');
+    toggle.className = 'graveyard-toggle';
+    toggle.innerHTML = `<span class="arrow">&#9654;</span> ${collapsed.length} collapsed ideas`;
+    const items = document.createElement('div');
+    items.className = 'graveyard-items';
+
+    toggle.onclick = () => {
+      items.classList.toggle('open');
+      toggle.querySelector('.arrow').classList.toggle('open');
+    };
+
+    for (const idea of collapsed) {
+      const card = document.createElement('div');
+      card.className = 'card card-idea card-collapsed';
+      card.onclick = () => showIdeaDetail(idea);
+      card.innerHTML = `
+        <div class="card-title">${escapeHTML(idea.title)}</div>
+        <div class="collapse-note">Collapsed into another idea</div>
+      `;
+      items.appendChild(card);
+    }
+
+    body.appendChild(toggle);
+    body.appendChild(items);
+  }
+
+  lane.appendChild(body);
+  return lane;
+}
+
+// ── Detail Overlay ──
+function showIdeaDetail(idea) {
+  const panel = document.getElementById('detailPanel');
+  const score = idea.score || 0;
+  const scoreClass = score >= 5 ? 'score-5' : score >= 4 ? 'score-4' : score >= 3 ? 'score-3' : 'score-2';
+
+  const sections = [
+    { key: 'user_job', title: 'Job to be Done' },
+    { key: 'demand_narrative', title: 'Demand Narrative' },
+    { key: 'signal_strength', title: 'Signal Strength' },
+    { key: 'competitor_gap', title: 'Competitor Gap' },
+    { key: 'improvement_hypothesis', title: 'Improvement Hypothesis' },
+    { key: 'current_workaround', title: 'Current Workaround' },
+    { key: 'switching_trigger', title: 'Switching Trigger' },
+    { key: 'kill_reason', title: 'Kill Reason' },
+  ].filter(s => idea[s.key])
+   .map(s => `<div class="detail-section"><h4>${s.title}</h4><p>${escapeHTML(idea[s.key])}</p></div>`)
+   .join('');
+
+  const tags = [];
+  if (idea.status) tags.push(escapeHTML(idea.status));
+  if (idea.estimated_complexity) tags.push(escapeHTML(idea.estimated_complexity));
+  if (idea.owner_proximity) tags.push(escapeHTML(idea.owner_proximity.replace('_', ' ')));
+  if (idea.trend_coupling) tags.push(escapeHTML(idea.trend_coupling));
+  const signals = (idea.signal_sources || []).map(s => escapeHTML(s)).join(', ');
+
+  // Research section
+  const researchHTML = buildResearchDetail(idea.research_summary);
+
+  // Triage section
+  const triageHTML = buildTriageDetail(idea.triage_summary);
+
+  panel.innerHTML = `
+    <div style="position:relative">
+      <button class="detail-close" onclick="closeDetail()">&times;</button>
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:4px">
+        <h2>${escapeHTML(idea.title)}</h2>
+        <div class="score-badge ${scoreClass}" style="position:static;flex-shrink:0">${score}</div>
+      </div>
+      <div class="detail-oneliner">${escapeHTML(idea.one_liner || '')}</div>
+      <div class="detail-meta">
+        ${tags.map(t => `<span class="meta-item">${t}</span>`).join('')}
+      </div>
+      ${signals ? `<div class="detail-section"><h4>Signal Sources</h4><p>${signals}</p></div>` : ''}
+      ${sections}
+      ${researchHTML}
+      ${triageHTML}
+    </div>
+  `;
+  document.getElementById('overlay').classList.add('show');
+}
+
+function buildResearchDetail(rs) {
+  if (!rs) return '';
+
+  const trendMap = { growing: 'pill-growing', stable: 'pill-stable', declining: 'pill-declining' };
+  const delivMap = {
+    fully_deliverable: { cls: 'pill-deliverable', label: 'Fully Deliverable' },
+    deliverable_with_constraints: { cls: 'pill-constrained', label: 'Constrained' },
+    structurally_risky: { cls: 'pill-risky', label: 'Structurally Risky' },
+    undeliverable: { cls: 'pill-risky', label: 'Undeliverable' },
+  };
+
+  // Truncate long market sizing strings
+  function truncate(str, maxLen) {
+    if (!str) return '--';
+    return escapeHTML(str.length > 200 ? str.slice(0, 200) + '...' : str);
+  }
+
+  let competitorHTML = '';
+  if (rs.top_competitors?.length) {
+    competitorHTML = `<ul class="competitor-list">` +
+      rs.top_competitors.map(c => {
+        const gapCls = c.gap_type === 'structural' ? 'gap-structural' : c.gap_type === 'temporal' ? 'gap-temporal' : c.gap_type === 'cosmetic' ? 'gap-cosmetic' : '';
+        return `<li>
+          <span class="comp-name">${escapeHTML(c.name)}</span>
+          ${c.gap_type ? `<span class="comp-gap ${gapCls}">${escapeHTML(c.gap_type)}</span>` : ''}
+          ${c.rating ? `<span style="color:var(--yellow);font-size:11px">★ ${escapeHTML(String(c.rating))}</span>` : ''}
+          ${c.reviews ? `<span style="color:var(--text-muted);font-size:10px">${c.reviews} reviews</span>` : ''}
+        </li>`;
+      }).join('') + `</ul>`;
+  }
+
+  let unknownsHTML = '';
+  if (rs.unknowns?.length) {
+    unknownsHTML = `<div class="research-cell" style="grid-column:1/-1"><h5>Unknowns</h5><ul style="margin:0;padding-left:16px;font-size:12px;color:var(--text-muted);line-height:1.5">` +
+      rs.unknowns.map(u => `<li>${escapeHTML(typeof u === 'string' ? u : u.unknown || JSON.stringify(u))}</li>`).join('') + `</ul></div>`;
+  }
+
+  const deliv = delivMap[rs.value_chain_deliverability];
+
+  return `
+    <div class="detail-research">
+      <h3>Research Findings</h3>
+      <div class="research-grid">
+        <div class="research-cell">
+          <h5>Market Trend</h5>
+          <div class="cell-value"><span class="research-pill ${trendMap[rs.market_trend] || ''}">${escapeHTML(rs.market_trend || '--')}</span></div>
+        </div>
+        <div class="research-cell">
+          <h5>Value Chain</h5>
+          <div class="cell-value">${deliv ? `<span class="research-pill ${deliv.cls}">${deliv.label}</span>` : '--'}</div>
+        </div>
+        <div class="research-cell">
+          <h5>TAM</h5>
+          <div class="cell-value" style="font-size:11px;line-height:1.4">${truncate(rs.tam)}</div>
+        </div>
+        <div class="research-cell">
+          <h5>SOM (12-month)</h5>
+          <div class="cell-value" style="font-size:11px;line-height:1.4">${truncate(rs.som)}</div>
+        </div>
+        <div class="research-cell" style="grid-column:1/-1">
+          <h5>Top Competitors</h5>
+          ${competitorHTML || '<div class="cell-value cell-na">No competitor data</div>'}
+        </div>
+        ${rs.value_chain_bottleneck ? `<div class="research-cell" style="grid-column:1/-1"><h5>Bottleneck</h5><div class="cell-value" style="font-size:11px;line-height:1.4">${escapeHTML(rs.value_chain_bottleneck)}</div></div>` : ''}
+        ${unknownsHTML}
+        ${rs.data_strategy_applicable ? `<div class="research-cell"><h5>Data Strategy</h5><div class="cell-value"><span class="research-pill pill-stable">${escapeHTML((rs.data_strategy_architecture || '').replace(/_/g, ' '))}</span></div></div>` : ''}
+      </div>
+    </div>
+  `;
+}
+
+function buildTriageDetail(ts) {
+  if (!ts) return '';
+
+  const cc = ts.concession_count ?? -1;
+  const total = (ts.kill_brief_responses || []).length;
+  const refuted = (ts.kill_brief_responses || []).filter(r => r.response === 'refuted').length;
+
+  // Recommendation badge
+  const recoMap = {
+    'PROMOTE_TO_VALIDATE': { cls: 'reco-promote', label: 'PROMOTE TO VALIDATE' },
+    'PROMOTE_TO_RAPID_PROTOTYPE': { cls: 'reco-rp', label: 'RAPID PROTOTYPE' },
+    'KILL': { cls: 'reco-kill', label: 'KILL' },
+    'DEFER': { cls: 'reco-defer', label: 'DEFER' },
+    'PIVOT': { cls: 'reco-pivot', label: 'PIVOT' },
+  };
+  const reco = recoMap[ts.recommendation] || { cls: 'reco-defer', label: ts.recommendation || 'Unknown' };
+
+  // Checks grid
+  const checkLabels = {
+    value_hypothesis: { name: 'Value Hypothesis', detail: '' },
+    market_demand: { name: 'Market Demand', detail: '' },
+    competitor_gap: { name: 'Competitor Gap', detail: ts.checks?.competitor_gap?.gap_durability ? `Gap: ${escapeHTML(ts.checks.competitor_gap.gap_durability)}` : '' },
+    unit_economics: { name: 'Unit Economics', detail: ts.checks?.unit_economics?.ltv_cac_trajectory ? `LTV:CAC ${escapeHTML(ts.checks.unit_economics.ltv_cac_trajectory)}` : '' },
+  };
+  const checksHTML = Object.entries(checkLabels).map(([k, v]) => {
+    const passed = ts.checks?.[k]?.passed;
+    const icon = passed === true ? '<span style="color:var(--green)">✓</span>' : passed === false ? '<span style="color:var(--red)">✗</span>' : '<span style="color:var(--text-muted)">?</span>';
+    return `<div class="check-cell">
+      <span class="check-icon">${icon}</span>
+      <div>
+        <div class="check-label">${v.name}</div>
+        ${v.detail ? `<div class="check-detail">${v.detail}</div>` : ''}
+      </div>
+    </div>`;
+  }).join('');
+
+  // Kill brief
+  const kbId = 'kb_' + Math.random().toString(36).slice(2);
+  const killBriefHTML = ts.kill_brief ? `
+    <div class="kill-brief-section">
+      <div class="kill-brief-toggle" onclick="document.getElementById('${kbId}').classList.toggle('open');this.querySelector('.arrow').classList.toggle('open')">
+        <span class="arrow">▶</span> Kill Brief
+      </div>
+      <div class="kill-brief-text" id="${kbId}">${escapeHTML(ts.kill_brief)}</div>
+    </div>
+  ` : '';
+
+  // Prosecution vs Defence
+  const ppHTML = (ts.kill_brief_responses || []).map(r => {
+    const cls = r.response === 'refuted' ? 'refuted' : 'conceded';
+    return `<div class="prosecution-item ${cls}">
+      <div class="pp-point">${escapeHTML(r.prosecution_point)}</div>
+      <span class="pp-badge ${cls}">${escapeHTML(r.response)}</span>
+      <div class="pp-evidence">${escapeHTML(r.evidence)}</div>
+    </div>`;
+  }).join('');
+
+  const ccCls = cc === 0 ? 'concession-0' : cc === 1 ? 'concession-1' : 'concession-2';
+
+  return `
+    <div class="detail-triage">
+      <h3>Triage Decision Trail</h3>
+      <div class="triage-headline">
+        <span class="reco-pill reco-large ${reco.cls}">${escapeHTML(reco.label)}</span>
+        ${cc >= 0 ? `<span class="concession-badge ${ccCls}">${refuted} refuted, ${cc} conceded of ${total} points</span>` : ''}
+        ${ts.ranked_position ? `<span class="meta-item" style="font-size:11px">#${ts.ranked_position} of ${ts.batch_size || '?'}</span>` : ''}
+      </div>
+      <div class="triage-checks-grid">${checksHTML}</div>
+      ${killBriefHTML}
+      ${ppHTML ? `<div style="margin-bottom:8px"><h4 style="font-size:12px;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px">Prosecution vs Defence</h4><div class="prosecution-list">${ppHTML}</div></div>` : ''}
+    </div>
+  `;
+}
+
+function closeDetail() {
+  document.getElementById('overlay').classList.remove('show');
+}
+
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeDetail(); });
+
+// ── Comparison View ──
+let compareAllIdeas = [];
+let compareSelected = new Set();
+
+function renderComparison() {
+  const el = document.getElementById('compareView');
+  compareAllIdeas = (data.ideas || [])
+    .filter(i => ['new', 'researched', 'cloned', 'triaged', 'promoted', 'validating'].includes(i.status))
+    .sort((a, b) => (b.score || 0) - (a.score || 0));
+
+  if (compareAllIdeas.length === 0) {
+    el.innerHTML = `<div class="compare-header"><h2>Compare Ideas</h2></div><div class="compare-empty">No active ideas to compare</div>`;
+    return;
+  }
+
+  // Default: select top 5 by score (only on first render)
+  if (compareSelected.size === 0) {
+    compareAllIdeas.slice(0, 5).forEach(i => compareSelected.add(i.id));
+  }
+
+  renderCompareUI(el);
+}
+
+function renderCompareUI(el) {
+  const selectedCount = compareSelected.size;
+
+  // Build chip selector
+  const chips = compareAllIdeas.map(idea => {
+    const s = idea.score || 0;
+    const cls = s >= 5 ? 'score-5' : s >= 4 ? 'score-4' : s >= 3 ? 'score-3' : 'score-2';
+    const sel = compareSelected.has(idea.id) ? ' selected' : '';
+    const title = idea.title.length > 28 ? idea.title.slice(0, 26) + '...' : idea.title;
+    return `<button class="compare-chip${sel}" data-id="${escapeHTML(idea.id)}" onclick="toggleCompareChip('${escapeHTML(idea.id)}')">
+      <span class="chip-score ${cls}">${s}</span>
+      <span>${escapeHTML(title)}</span>
+      <span class="chip-remove">&times;</span>
+    </button>`;
+  }).join('');
+
+  // Build cards for selected ideas
+  const selected = compareAllIdeas.filter(i => compareSelected.has(i.id));
+  const cards = selected.map(idea => buildCompareCard(idea)).join('');
+
+  el.innerHTML = `
+    <div class="compare-header">
+      <h2>Compare Ideas</h2>
+      <span class="compare-count">${selectedCount} of ${compareAllIdeas.length} selected</span>
+    </div>
+    <div class="compare-selector">
+      <div class="compare-selector-controls">
+        <span class="compare-selector-label">Select ideas to compare</span>
+        <button onclick="compareSelectTop5()">Top 5</button>
+        <button onclick="compareSelectAll()">All</button>
+        <button onclick="compareClearAll()">Clear</button>
+      </div>
+      <div class="compare-chips">${chips}</div>
+    </div>
+    ${selected.length > 0
+      ? `<div class="compare-cards">${cards}</div>`
+      : `<div class="compare-empty">Select ideas above to compare</div>`}
+  `;
+}
+
+function toggleCompareChip(id) {
+  if (compareSelected.has(id)) compareSelected.delete(id);
+  else compareSelected.add(id);
+  renderCompareUI(document.getElementById('compareView'));
+}
+
+function compareSelectTop5() {
+  compareSelected.clear();
+  compareAllIdeas.slice(0, 5).forEach(i => compareSelected.add(i.id));
+  renderCompareUI(document.getElementById('compareView'));
+}
+
+function compareSelectAll() {
+  compareAllIdeas.forEach(i => compareSelected.add(i.id));
+  renderCompareUI(document.getElementById('compareView'));
+}
+
+function compareClearAll() {
+  compareSelected.clear();
+  renderCompareUI(document.getElementById('compareView'));
+}
+
+function buildCompareCard(idea) {
+  const s = idea.score || 0;
+  const scoreCls = s >= 5 ? 'score-5' : s >= 4 ? 'score-4' : s >= 3 ? 'score-3' : 'score-2';
+
+  // Helper
+  function pill(text, cls) { return text ? `<span class="research-pill ${cls}">${escapeHTML(text)}</span>` : '<span class="cell-na">--</span>'; }
+  function passFail(val) {
+    if (val === true) return '<span style="color:var(--green);font-weight:600">&#10003;</span>';
+    if (val === false) return '<span style="color:var(--red);font-weight:600">&#10007;</span>';
+    return '<span class="cell-na">--</span>';
+  }
+
+  const trendMap = { growing: { cls: 'pill-growing', icon: '&#8593;' }, stable: { cls: 'pill-stable', icon: '&#8594;' }, declining: { cls: 'pill-declining', icon: '&#8595;' } };
+  const delivMap = { fully_deliverable: 'pill-deliverable', deliverable_with_constraints: 'pill-constrained', structurally_risky: 'pill-risky', undeliverable: 'pill-risky' };
+  const delivLabel = { fully_deliverable: 'Deliverable', deliverable_with_constraints: 'Constrained', structurally_risky: 'Risky', undeliverable: 'Undeliverable' };
+  const recoMap = {
+    'PROMOTE_TO_VALIDATE': { cls: 'reco-promote', label: 'Promote' },
+    'PROMOTE_TO_RAPID_PROTOTYPE': { cls: 'reco-rp', label: 'Rapid Proto' },
+    'KILL': { cls: 'reco-kill', label: 'Kill' },
+    'DEFER': { cls: 'reco-defer', label: 'Defer' },
+    'PIVOT': { cls: 'reco-pivot', label: 'Pivot' },
+  };
+
+  // Identity cells
+  const proxLabel = idea.owner_proximity ? escapeHTML(idea.owner_proximity.replace(/_/g, ' ')) : '--';
+  const trendLabel = idea.trend_coupling ? `<span style="color:var(--green)">${escapeHTML(idea.trend_coupling)}</span>` : '<span class="cell-na">neutral</span>';
+
+  let identityCells = `
+    <div class="compare-card-cell"><h5>Status</h5><div class="cell-value">${escapeHTML(idea.status)}</div></div>
+    <div class="compare-card-cell"><h5>Complexity</h5><div class="cell-value">${idea.estimated_complexity ? escapeHTML(idea.estimated_complexity) : '<span class="cell-na">--</span>'}</div></div>
+    <div class="compare-card-cell"><h5>Proximity</h5><div class="cell-value">${proxLabel}</div></div>
+    <div class="compare-card-cell"><h5>Trend</h5><div class="cell-value">${trendLabel}</div></div>
+    <div class="compare-card-cell"><h5>Signals</h5><div class="cell-value">${(idea.signal_sources || []).length}</div></div>
+  `;
+
+  // Research section
+  let researchBlock = '';
+  const rs = idea.research_summary;
+  if (rs) {
+    const t = trendMap[rs.market_trend];
+    const trendPill = t ? pill(`${t.icon} ${rs.market_trend}`, t.cls) : '<span class="cell-na">--</span>';
+    const d = rs.value_chain_deliverability;
+    const delivPill = d ? pill(delivLabel[d] || d, delivMap[d] || '') : '<span class="cell-na">--</span>';
+    const ls = rs.competitive_landscape;
+    const lsMap = { emerging: 'pill-emerging', blue_ocean: 'pill-blue-ocean', red_ocean: 'pill-red-ocean' };
+    const lsPill = ls ? pill(ls.replace(/_/g, ' '), lsMap[ls] || '') : '<span class="cell-na">--</span>';
+    const compList = (rs.top_competitors || []).map(c => escapeHTML(c.name)).join(', ') || '<span class="cell-na">--</span>';
+    const som = rs.som ? escapeHTML(rs.som.length > 50 ? rs.som.slice(0, 48) + '...' : rs.som) : '<span class="cell-na">--</span>';
+
+    researchBlock = `
+      <div class="compare-section-block">
+        <h4>Research</h4>
+        <div class="mini-grid">
+          <div class="mini-cell"><h5>Market</h5><div class="val">${trendPill}</div></div>
+          <div class="mini-cell"><h5>Landscape</h5><div class="val">${lsPill}</div></div>
+          <div class="mini-cell"><h5>Deliverability</h5><div class="val">${delivPill}</div></div>
+          <div class="mini-cell"><h5>SOM</h5><div class="val" style="font-size:11px">${som}</div></div>
+        </div>
+        <div style="margin-top:8px"><h5 style="font-size:10px;font-weight:600;color:var(--text-muted);margin:0 0 2px 0">Competitors</h5><div style="font-size:11px">${compList}</div></div>
+      </div>`;
+  }
+
+  // Triage section
+  let triageBlock = '';
+  const ts = idea.triage_summary;
+  if (ts) {
+    const reco = recoMap[ts.recommendation] || { cls: 'reco-defer', label: ts.recommendation || '?' };
+    const cc = ts.concession_count ?? -1;
+    const ccCls = cc === 0 ? 'concession-0' : cc === 1 ? 'concession-1' : 'concession-2';
+    const checks = ['value_hypothesis', 'market_demand', 'competitor_gap', 'unit_economics'];
+    const checkDots = checks.map(k => {
+      const passed = ts.checks?.[k]?.passed;
+      if (passed === true) return '<span style="color:var(--green)" title="' + k.replace(/_/g, ' ') + '">&#9679;</span>';
+      if (passed === false) return '<span style="color:var(--red)" title="' + k.replace(/_/g, ' ') + '">&#9679;</span>';
+      return '<span style="color:var(--text-muted)" title="' + k.replace(/_/g, ' ') + '">&#9675;</span>';
+    }).join(' ');
+
+    triageBlock = `
+      <div class="compare-section-block">
+        <h4>Triage</h4>
+        <div class="mini-grid">
+          <div class="mini-cell"><h5>Recommendation</h5><div class="val"><span class="reco-pill ${reco.cls}">${escapeHTML(reco.label)}</span></div></div>
+          <div class="mini-cell"><h5>Concessions</h5><div class="val">${cc >= 0 ? `<span class="concession-badge ${ccCls}">${cc}</span>` : '<span class="cell-na">--</span>'}</div></div>
+          <div class="mini-cell"><h5>Checks</h5><div class="val" style="font-size:14px;letter-spacing:3px">${checkDots}</div></div>
+          <div class="mini-cell"><h5>Rank</h5><div class="val">${ts.ranked_position ? '#' + ts.ranked_position + '/' + (ts.batch_size || '?') : '<span class="cell-na">--</span>'}</div></div>
+        </div>
+      </div>`;
+  }
+
+  // Risk line
+  let riskHTML = '';
+  if (rs?.unknowns?.length) {
+    const u = rs.unknowns[0];
+    const text = typeof u === 'string' ? u : u.unknown || '';
+    riskHTML = `<div style="margin-top:8px;font-size:11px;color:var(--yellow);line-height:1.4"><strong>Risk:</strong> ${escapeHTML(text.length > 120 ? text.slice(0, 118) + '...' : text)}</div>`;
+  } else if (ts?.kill_brief) {
+    const first = ts.kill_brief.split('.')[0] + '.';
+    riskHTML = `<div style="margin-top:8px;font-size:11px;color:var(--red);line-height:1.4"><strong>Risk:</strong> ${escapeHTML(first.length > 120 ? first.slice(0, 118) + '...' : first)}</div>`;
+  }
+
+  return `
+    <div class="compare-card">
+      <div class="compare-card-header" onclick="showIdeaDetail(data.ideas.find(i=>i.id==='${escapeHTML(idea.id)}'))">
+        <span class="score-badge ${scoreCls}" style="position:static;width:28px;height:28px;font-size:12px;display:inline-flex;flex-shrink:0">${s}</span>
+        <h3>${escapeHTML(idea.title)}</h3>
+        <button class="compare-chip chip-remove" onclick="event.stopPropagation();toggleCompareChip('${escapeHTML(idea.id)}')" style="display:inline;background:transparent;border:none;color:var(--text-muted);font-size:16px;cursor:pointer;padding:4px" title="Remove from comparison">&times;</button>
+      </div>
+      ${idea.one_liner ? `<div class="compare-card-oneliner">${escapeHTML(idea.one_liner)}</div>` : ''}
+      <div class="compare-card-grid">${identityCells}</div>
+      ${(researchBlock || triageBlock) ? `<div class="compare-card-sections">${researchBlock}${triageBlock}</div>` : ''}
+      ${riskHTML}
+    </div>`;
+}
+
+// ── Start ──
+init();
+</script>
+</body>
+</html>

@@ -1,0 +1,203 @@
+name: "APOS CI"
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  validate-schemas:
+    name: Validate JSON Schemas
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install jsonschema
+        run: pip install jsonschema
+
+      - name: Validate all schemas are valid JSON Schema draft-07
+        run: |
+          python3 << 'PYEOF'
+          import json, glob, sys
+
+          errors = []
+          schemas = glob.glob("agents/schemas/*.schema.json")
+
+          if not schemas:
+              print("ERROR: No schemas found in agents/schemas/")
+              sys.exit(1)
+
+          for path in sorted(schemas):
+              try:
+                  with open(path) as f:
+                      schema = json.load(f)
+                  # Check it declares draft-07
+                  draft = schema.get("$schema", "")
+                  if "draft-07" not in draft:
+                      errors.append(f"{path}: missing or wrong $schema (got: {draft})")
+                  print(f"  OK: {path}")
+              except json.JSONDecodeError as e:
+                  errors.append(f"{path}: invalid JSON — {e}")
+
+          if errors:
+              print(f"\n{len(errors)} schema error(s):")
+              for e in errors:
+                  print(f"  FAIL: {e}")
+              sys.exit(1)
+          else:
+              print(f"\n{len(schemas)} schemas validated.")
+          PYEOF
+
+      - name: Validate agent outputs against schemas
+        run: |
+          python3 << 'PYEOF'
+          import json, glob, sys
+          from jsonschema import validate, ValidationError
+
+          errors = []
+          checked = 0
+
+          for output_path in sorted(glob.glob("apps/*/approvals/pending/*.json")):
+              basename = output_path.rsplit("/", 1)[-1].replace(".json", "")
+              schema_path = f"agents/schemas/{basename}.schema.json"
+
+              # Try without batch suffixes (e.g., ios-review-batch2-output → ios-review-output)
+              if not glob.glob(schema_path):
+                  import re
+                  clean = re.sub(r"-batch\d+", "", basename)
+                  schema_path = f"agents/schemas/{clean}.schema.json"
+
+              if not glob.glob(schema_path):
+                  continue
+
+              try:
+                  with open(output_path) as f:
+                      data = json.load(f)
+                  with open(schema_path) as f:
+                      schema = json.load(f)
+                  validate(instance=data, schema=schema)
+                  checked += 1
+                  print(f"  OK: {output_path}")
+              except ValidationError as e:
+                  errors.append(f"{output_path}: {e.message[:200]}")
+              except json.JSONDecodeError as e:
+                  errors.append(f"{output_path}: invalid JSON — {e}")
+
+          if errors:
+              print(f"\n{len(errors)} validation error(s):")
+              for e in errors:
+                  print(f"  FAIL: {e}")
+              sys.exit(1)
+          else:
+              print(f"\n{checked} agent outputs validated against schemas.")
+          PYEOF
+
+  lint-agents:
+    name: Lint Agent Definitions
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check required sections in agent definitions
+        run: |
+          python3 << 'PYEOF'
+          import glob, sys
+
+          REQUIRED_SECTIONS = ["## Prerequisites", "## When NOT to Run"]
+          errors = []
+
+          agents = glob.glob(".claude/agents/*-agent.md")
+          if not agents:
+              print("ERROR: No agent definitions found")
+              sys.exit(1)
+
+          for path in sorted(agents):
+              with open(path) as f:
+                  content = f.read()
+              for section in REQUIRED_SECTIONS:
+                  if section not in content:
+                      errors.append(f"{path}: missing '{section}'")
+
+          if errors:
+              print(f"{len(errors)} lint error(s):")
+              for e in errors:
+                  print(f"  FAIL: {e}")
+              sys.exit(1)
+          else:
+              print(f"{len(agents)} agent definitions passed lint.")
+          PYEOF
+
+  validate-symlinks:
+    name: Validate Symlinks
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check symlinks resolve to existing targets
+        run: |
+          errors=0
+          for link in approvals/pending docs specs; do
+            if [ -L "$link" ]; then
+              target=$(readlink "$link")
+              if [ ! -e "$target" ]; then
+                echo "FAIL: $link -> $target (dangling symlink)"
+                errors=$((errors + 1))
+              else
+                echo "  OK: $link -> $target"
+              fi
+            fi
+          done
+          if [ "$errors" -gt 0 ]; then
+            echo ""
+            echo "$errors dangling symlink(s) found. Commit the target directories before pushing."
+            exit 1
+          fi
+
+  validate-json:
+    name: Validate JSON Files
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check all JSON files parse correctly
+        run: |
+          python3 << 'PYEOF'
+          import json, glob, sys
+
+          errors = []
+          patterns = [
+              "agents/schemas/*.json",
+              "agents/config/*.json",
+              "apps/*/app-state.json",
+              "apps/*/learnings.json",
+              "apps/*/action-queue.json",
+              "apps/*/action-log.json",
+              "state.json",
+              "ideas.json",
+              "experiments.json",
+          ]
+
+          checked = 0
+          for pattern in patterns:
+              for path in sorted(glob.glob(pattern)):
+                  try:
+                      with open(path) as f:
+                          json.load(f)
+                      checked += 1
+                  except json.JSONDecodeError as e:
+                      errors.append(f"{path}: {e}")
+
+          if errors:
+              print(f"{len(errors)} JSON parse error(s):")
+              for e in errors:
+                  print(f"  FAIL: {e}")
+              sys.exit(1)
+          else:
+              print(f"{checked} JSON files valid.")
+          PYEOF

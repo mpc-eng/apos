@@ -1,0 +1,109 @@
+# Requirements Research: {{APP_NAME}}
+
+## Research Tier
+
+{{TIER}} — {{TIER_RATIONALE}}
+
+## 1. Domain Scope
+
+{{DOMAIN_DESCRIPTION}}
+
+**Governing bodies:** {{GOVERNING_BODIES}}
+**Professional standards:** {{PROFESSIONAL_STANDARDS}}
+**Key legislation:** {{KEY_LEGISLATION}}
+
+## 2. User Workflow Mapping
+
+### P0-A: {{PERSONA_A_NAME}}
+
+#### Current Workflow (As-Is)
+
+| Step | Action | Tool/Method | Pain Point | Frequency |
+|---|---|---|---|---|
+| 1 | | | | |
+
+#### Target Workflow (To-Be)
+
+| Step | Action | App Feature | PRD Feature Ref | Compliance Touchpoint |
+|---|---|---|---|---|
+| 1 | | | | |
+
+### P0-B: {{PERSONA_B_NAME}}
+
+#### Current Workflow (As-Is)
+
+| Step | Action | Tool/Method | Pain Point | Frequency |
+|---|---|---|---|---|
+| 1 | | | | |
+
+#### Target Workflow (To-Be)
+
+| Step | Action | App Feature | PRD Feature Ref | Compliance Touchpoint |
+|---|---|---|---|---|
+| 1 | | | | |
+
+## 3. Domain Rules
+
+| Rule ID | Rule | Source | Authority | Effective Date | Verification |
+|---|---|---|---|---|---|
+| REG-001 | | | | | |
+| ACC-001 | | | | | |
+| TAX-001 | | | | | |
+| PLAT-001 | | | | | |
+| DATA-001 | | | | | |
+
+### Rule ID Prefixes
+
+- `REG-` — Regulatory mandate (must comply or face penalties)
+- `ACC-` — Accounting standard (professional best practice)
+- `TAX-` — Tax law (calculation rules, thresholds, rates)
+- `PLAT-` — Platform rule (App Store, Apple developer requirements)
+- `DATA-` — Data protection (UK GDPR, ICO guidance)
+- `LEGAL-` — General legal (consumer rights, contracts, liability)
+
+## 4. Calculation Rules
+
+| Calc ID | Calculation | Formula | Source | Worked Example | Validation Source |
+|---|---|---|---|---|---|
+| CALC-001 | | | | Input: → Output: | authoritative_published / academic_empirical / derived_heuristic / owner_domain_expertise / unvalidated |
+
+> Each worked example must cite an authoritative source. These become test fixtures.
+>
+> Validation Source classifies the confidence level of each threshold/constant:
+> - `authoritative_published` — Published worked example from governing body (highest confidence)
+> - `academic_empirical` — From peer-reviewed research with sample size >=30 (high confidence)
+> - `derived_heuristic` — Derived from domain principles without direct empirical testing (medium confidence, flag for calibration)
+> - `owner_domain_expertise` — Based on owner's professional experience (requires OWNER_VERIFICATION_REQUIRED)
+> - `unvalidated` — No validation source available (flag as risk)
+
+## 5. Edge Cases
+
+| Edge Case ID | Scenario | Correct Handling | Source | Phase |
+|---|---|---|---|---|
+| EC-001 | | | | |
+
+## 6. Platform Requirements
+
+### App Store Review Guidelines
+
+- Section X.X: <requirement> — <how this app is affected>
+
+### Privacy
+
+- **Privacy manifest entries required:**
+- **Required-reason APIs:**
+- **UK GDPR applicability:**
+
+### StoreKit (if monetised)
+
+- Subscription disclosure requirements:
+- Refund handling obligations:
+- Win-back offer constraints:
+
+## 7. Regulatory Change Watch
+
+| Rule ID | Current Value | Source URL | Last Verified | Next Check Trigger | Impact if Changed |
+|---|---|---|---|---|---|
+| | | | | | |
+
+> Next Check Trigger examples: "Post-Budget", "Annual (new tax year)", "Monthly HMRC check", "Quarterly FCA update"

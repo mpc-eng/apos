@@ -1,0 +1,30 @@
+{
+  "app_name": "Example App",
+  "app_slug": "example-app",
+  "platform": "ios",
+  "framework": "swiftui",
+  "deploy_target": "17.4",
+  "swift_version": "6.0",
+  "app_category": "productivity",
+  "evaluation_profile": "standard",
+  "current_stage": "idea_pool",
+  "idea_id": null,
+  "created_at": "2024-01-01T00:00:00Z",
+  "manual_override": {
+    "overridden": false,
+    "override_date": null,
+    "reason": null,
+    "previous_stage": null
+  },
+  "validation_path": null,
+  "build_progress": {
+    "current_phase": null,
+    "phase_detail": null,
+    "current_sprint": null,
+    "previous_sprints": [],
+    "repo_path": null,
+    "artifacts_completed": [],
+    "artifacts_pending": [],
+    "foundation_steps": {}
+  }
+}

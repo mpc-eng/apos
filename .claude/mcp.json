@@ -1,0 +1,19 @@
+{
+  "mcpServers": {
+    "figma": {
+      "type": "http",
+      "url": "https://mcp.figma.com/mcp"
+    },
+    "XcodeBuildMCP": {
+      "command": "npx",
+      "args": ["-y", "xcodebuildmcp@latest", "mcp"],
+      "env": {
+        "INCREMENTAL_BUILDS_ENABLED": "true"
+      }
+    },
+    "xcode": {
+      "command": "xcrun",
+      "args": ["mcpbridge"]
+    }
+  }
+}

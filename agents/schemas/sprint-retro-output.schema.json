@@ -1,0 +1,220 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "SPRINT-RETRO Output",
+  "description": "Validates the output of the SPRINT-RETRO pipeline agent for sprint retrospective analysis.",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "agent",
+    "timestamp",
+    "sprint_number",
+    "sprint_specs",
+    "feedback_period",
+    "feature_health",
+    "amendment_proposals",
+    "backlog_adjustments",
+    "next_sprint_proposal",
+    "learnings_captured",
+    "decision_card",
+    "self_check"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": { "type": "string", "const": "3.4.0" },
+    "agent": { "type": "string", "const": "SPRINT-RETRO" },
+    "timestamp": { "type": "string", "format": "date-time" },
+    "sprint_number": { "type": "integer", "minimum": 1 },
+    "sprint_specs": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 },
+      "minItems": 1,
+      "maxItems": 3
+    },
+    "feedback_period": {
+      "type": "object",
+      "required": ["deploy_date", "retro_date", "days_elapsed", "testflight_users_active"],
+      "additionalProperties": false,
+      "properties": {
+        "deploy_date": { "type": "string", "format": "date-time" },
+        "retro_date": { "type": "string", "format": "date-time" },
+        "days_elapsed": { "type": "integer", "minimum": 3 },
+        "testflight_users_active": { "type": "integer", "minimum": 0 }
+      }
+    },
+    "feature_health": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "spec_id",
+          "rating",
+          "completion_rate",
+          "confusion_points",
+          "feedback_sentiment",
+          "evidence_summary",
+          "amendment_count"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "spec_id": { "type": "string", "minLength": 1 },
+          "rating": {
+            "type": "string",
+            "enum": ["healthy", "needs_amendment", "needs_redesign", "insufficient_data"]
+          },
+          "adoption_rate": { "type": ["number", "null"], "minimum": 0, "maximum": 1 },
+          "completion_rate": { "type": ["number", "null"], "minimum": 0, "maximum": 1 },
+          "confusion_points": {
+            "type": "array",
+            "items": { "type": "string" }
+          },
+          "feedback_sentiment": {
+            "type": "string",
+            "enum": ["positive", "mixed", "negative", "insufficient"]
+          },
+          "evidence_summary": { "type": "string", "minLength": 10 },
+          "amendment_count": { "type": "integer", "minimum": 0, "maximum": 3 }
+        }
+      },
+      "minItems": 1,
+      "maxItems": 3
+    },
+    "amendment_proposals": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "parent_spec_id",
+          "amendment_number",
+          "root_cause",
+          "root_cause_category",
+          "convergence_status",
+          "acs_to_modify",
+          "acs_to_add",
+          "acs_to_remove",
+          "total_ac_changes"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "parent_spec_id": { "type": "string", "minLength": 1 },
+          "amendment_number": { "type": "integer", "minimum": 1, "maximum": 3 },
+          "root_cause": { "type": "string", "minLength": 20 },
+          "root_cause_category": {
+            "type": "string",
+            "enum": ["discoverability", "learnability", "comprehension", "flow_interruption", "error_recovery", "other"]
+          },
+          "convergence_status": {
+            "type": "string",
+            "enum": ["convergent", "divergent"]
+          },
+          "acs_to_modify": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": ["ac_id", "current", "proposed"],
+              "additionalProperties": false,
+              "properties": {
+                "ac_id": { "type": "string", "pattern": "^AC-\\d{3}$" },
+                "current": { "type": "string", "minLength": 1 },
+                "proposed": { "type": "string", "minLength": 1 }
+              }
+            }
+          },
+          "acs_to_add": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": ["ac_id", "description"],
+              "additionalProperties": false,
+              "properties": {
+                "ac_id": { "type": "string", "pattern": "^AC-\\d{3}$" },
+                "description": { "type": "string", "minLength": 10 }
+              }
+            }
+          },
+          "acs_to_remove": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": ["ac_id", "removal_reason"],
+              "additionalProperties": false,
+              "properties": {
+                "ac_id": { "type": "string", "pattern": "^AC-\\d{3}$" },
+                "removal_reason": { "type": "string", "minLength": 10 }
+              }
+            }
+          },
+          "total_ac_changes": { "type": "integer", "minimum": 1, "maximum": 3 }
+        }
+      }
+    },
+    "backlog_adjustments": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["type", "spec_id", "rationale"],
+        "additionalProperties": false,
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": ["reorder", "defer", "add", "promote"]
+          },
+          "spec_id": { "type": "string", "minLength": 1 },
+          "from_position": { "type": "integer", "minimum": 1 },
+          "to_position": { "type": "integer", "minimum": 1 },
+          "rationale": { "type": "string", "minLength": 10 }
+        }
+      }
+    },
+    "next_sprint_proposal": {
+      "type": "object",
+      "required": ["sprint_number", "specs", "rationale"],
+      "additionalProperties": false,
+      "properties": {
+        "sprint_number": { "type": "integer", "minimum": 2 },
+        "specs": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 },
+          "minItems": 1,
+          "maxItems": 3
+        },
+        "rationale": { "type": "string", "minLength": 10 }
+      }
+    },
+    "learnings_captured": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["date", "source", "sprint_number", "test_name", "learning", "reviewed"],
+        "additionalProperties": false,
+        "properties": {
+          "date": { "type": "string", "format": "date-time" },
+          "source": { "type": "string", "const": "sprint-retro" },
+          "sprint_number": { "type": "integer", "minimum": 1 },
+          "test_name": { "type": "string", "minLength": 1 },
+          "learning": { "type": "string", "minLength": 10 },
+          "reviewed": { "type": "boolean", "const": false }
+        }
+      },
+      "minItems": 1
+    },
+    "decision_card": { "type": "string", "minLength": 100 },
+    "self_check": {
+      "type": "object",
+      "required": [
+        "agent_badge",
+        "output_schema_valid",
+        "all_features_assessed",
+        "amendment_limit_respected",
+        "learnings_captured"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "agent_badge": { "type": "string", "const": "[SPRINT-RETRO]" },
+        "output_schema_valid": { "type": "boolean" },
+        "all_features_assessed": { "type": "boolean" },
+        "amendment_limit_respected": { "type": "boolean" },
+        "learnings_captured": { "type": "boolean" }
+      }
+    }
+  }
+}

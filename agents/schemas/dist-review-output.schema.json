@@ -1,0 +1,150 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "DIST-REVIEW Output",
+  "description": "Validates the output of the DIST-REVIEW advisory agent. Evaluates distribution channel readiness, subreddit fitness, account standing, and post structure. Never blocks the pipeline.",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "agent",
+    "timestamp",
+    "review_passed",
+    "subreddit_assessment",
+    "account_readiness",
+    "post_structure_flags",
+    "validation_target",
+    "recommended_channel",
+    "self_check"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": { "type": "string", "const": "3.4.0" },
+    "agent": { "type": "string", "const": "DIST-REVIEW" },
+    "timestamp": { "type": "string", "format": "date-time" },
+    "review_passed": {
+      "type": "boolean",
+      "const": true,
+      "description": "Advisory agents never block the pipeline; always true."
+    },
+    "subreddit_assessment": {
+      "type": "object",
+      "required": ["target_subreddit", "classification", "min_account_age_days", "min_karma"],
+      "additionalProperties": false,
+      "properties": {
+        "target_subreddit": { "type": "string", "minLength": 1 },
+        "classification": {
+          "type": "string",
+          "enum": ["high_conversion", "low_conversion", "high_risk_removal"]
+        },
+        "audience_type": {
+          "type": "string",
+          "enum": ["user", "builder"],
+          "description": "Whether the subreddit serves end-users or builders/developers."
+        },
+        "min_account_age_days": { "type": "integer", "minimum": 0 },
+        "min_karma": { "type": "integer", "minimum": 0 }
+      }
+    },
+    "account_readiness": {
+      "type": "object",
+      "required": ["account_age_days", "account_karma", "meets_requirements", "risk_level", "fallback_channel"],
+      "additionalProperties": false,
+      "properties": {
+        "account_age_days": { "type": "integer", "minimum": 0 },
+        "account_karma": { "type": "integer" },
+        "meets_requirements": { "type": "boolean" },
+        "risk_level": {
+          "type": "string",
+          "enum": ["low", "medium", "high"]
+        },
+        "fallback_channel": { "type": "string" }
+      }
+    },
+    "post_structure_flags": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["flag_id", "description", "rewritten_opening"],
+        "additionalProperties": false,
+        "properties": {
+          "flag_id": { "type": "string", "minLength": 1 },
+          "description": { "type": "string", "minLength": 1 },
+          "rewritten_opening": { "type": "string", "minLength": 1 }
+        }
+      }
+    },
+    "validation_target": {
+      "type": "object",
+      "required": ["original_target", "revised_target", "revised_window_days", "multi_channel_recommended"],
+      "additionalProperties": false,
+      "properties": {
+        "original_target": { "type": "integer", "minimum": 0 },
+        "revised_target": { "type": "integer", "minimum": 0 },
+        "revised_window_days": { "type": "integer", "minimum": 1 },
+        "multi_channel_recommended": { "type": "boolean" }
+      }
+    },
+    "recommended_channel": {
+      "type": "string",
+      "enum": [
+        "reddit_primary",
+        "reddit_secondary",
+        "facebook_group",
+        "reddit_plus_facebook",
+        "product_hunt",
+        "indie_hackers",
+        "hacker_news",
+        "twitter_x",
+        "discord_community",
+        "defer_30_days"
+      ]
+    },
+    "secondary_channel": {
+      "type": ["string", "null"],
+      "enum": [
+        "reddit_primary",
+        "reddit_secondary",
+        "facebook_group",
+        "reddit_plus_facebook",
+        "product_hunt",
+        "indie_hackers",
+        "hacker_news",
+        "twitter_x",
+        "discord_community",
+        null
+      ],
+      "description": "Optional secondary channel recommendation for multi-channel validation."
+    },
+    "secondary_channel_rationale": {
+      "type": "string",
+      "description": "Why this secondary channel was selected. Required when secondary_channel is not null."
+    },
+    "channel_rationale": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Required when recommended_channel is not reddit_primary."
+    },
+    "self_check": {
+      "type": "object",
+      "required": ["agent_badge", "output_schema_valid", "gate_type"],
+      "additionalProperties": false,
+      "properties": {
+        "agent_badge": { "type": "string", "const": "[DIST-REVIEW]" },
+        "output_schema_valid": { "type": "boolean" },
+        "gate_type": { "type": "string", "const": "advisory" }
+      }
+    }
+  },
+  "if": {
+    "not": {
+      "properties": { "recommended_channel": { "const": "reddit_primary" } },
+      "required": ["recommended_channel"]
+    }
+  },
+  "then": {
+    "required": [
+      "schema_version", "agent", "timestamp", "review_passed",
+      "subreddit_assessment", "account_readiness", "post_structure_flags",
+      "validation_target", "recommended_channel", "channel_rationale", "self_check"
+    ]
+  }
+}

@@ -1,0 +1,24 @@
+{
+  "schema_version": "3.4.0",
+  "active_app_slug": "example-app",
+  "app_registry": [
+    {
+      "slug": "example-app",
+      "name": "Example App",
+      "current_stage": "idea_pool",
+      "repo_path": null,
+      "app_category": "productivity",
+      "platform": "ios",
+      "evaluation_profile": "standard"
+    }
+  ],
+  "active_validation": null,
+  "platforms_available": ["ios", "web"],
+  "ideation_modes": ["market_pull", "technology_push", "clone"],
+  "evaluation_profiles": ["standard", "builder_program"],
+  "default_platform": "ios",
+  "default_ideation_mode": "market_pull",
+  "default_evaluation_profile": "standard",
+  "active_rapid_prototypes": 0,
+  "max_rapid_prototypes": 1
+}
