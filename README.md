@@ -70,6 +70,10 @@ apps/                 # Per-app directories (specs, docs, state)
 
 See [USER_GUIDE.md](USER_GUIDE.md) for comprehensive documentation covering all commands, agents, and workflow details.
 
+## Contributing
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines. All contributions require a [DCO sign-off](DCO).
+
 ## License
 
-[MIT](LICENSE)
+[Apache License 2.0](LICENSE)
