@@ -325,7 +325,6 @@ Weekly cycle:
 | Command | What It Does |
 |---|---|
 | `/switch` | Show which app is active and list all registered apps |
-| `/switch pausemate` | Switch to PauseMate (all commands now target PauseMate) |
 | `/add-app` | Register a new app in the pipeline |
 
 ### Framework Maintenance
